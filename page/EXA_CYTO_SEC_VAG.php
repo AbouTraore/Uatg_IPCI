@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EXAMEN CYTOBACTERIOLOGIQUE DES SECRETIONS CERVICO </title>
+    <title>EXAMEN CYTOBACTERIOLOGIQUE DES SECRETIONS  </title>
     <style>
         :root {
             --primary-bg: #f0f5ff;
