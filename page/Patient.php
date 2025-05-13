@@ -1,0 +1,175 @@
+<?php 
+// Tu peux ajouter du code PHP ici si besoin plus tard
+?>
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link href="../img/logo/logo.png" rel="icon">
+  <title>Nouveau Utilisateur</title>
+  <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+  <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+  <link href="../css/ruang-admin.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-login">
+  <!-- Register Content -->
+  <div class="container-login">
+    <div class="row justify-content-center">
+      <div class="col-xl-10 col-lg-12 col-md-9">
+        <div class="card shadow-sm my-5">
+          <div class="card-body p-0">
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="login-form">
+                  <div class="text-center">
+                    <h3 class="text-gray-900 mb-4">Information du patient</h3>
+                  </div>
+                  <form method="POST" action="Insert_patient.php" class="form border rounded p-4 bg-white shadow-sm">
+                    <div class="form-row">
+                      <div class="form-group col-md-4">
+                        <label><h5>N° Urap :</h5></label>
+                        <input type="text" name="N_Urap" id="N_Urap" class="form-control" required placeholder="Taper le numero Urap" autocomplete="off">
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Nom :</h5></label>
+                        <input type="text" name="Nom" id="Nom" class="form-control" required placeholder="Taper votre nom" autocomplete="off">
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Prénom :</h5></label>
+                        <input type="text" name="Prenom" id="prenom" class="form-control" required placeholder="Taper votre prénom" autocomplete="off">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-4">
+                        <label><h5>Age :</h5></label>
+                        <input type="text" name="Age" id="Age" class="form-control" required placeholder="Taper votre âge" autocomplete="off">
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Sexe :</h5></label>
+                        <select name="SexeP" id="SexeP" class="form-control">
+                          <option value="Masculin">Masculin</option>
+                          <option value="Féminin">Féminin</option>
+                        </select>
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Date de naissance :</h5></label>
+                        <input type="date" name="datenaiss" id="datenaiss" class="form-control" required autocomplete="off">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-6">
+                        <label><h5>Contact :</h5></label>
+                        <input type="text" name="contact" id="contact" class="form-control" required placeholder="Taper votre contact" autocomplete="off">
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label><h5>Adresse :</h5></label>
+                        <input type="text" name="Adresse" id="Adresse" class="form-control" required placeholder="Taper votre adresse" autocomplete="off">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-4">
+                        <label><h5>Situation Matrimoniale :</h5></label>
+                        <select id="SituaM" name="SituaM" class="form-control">
+                          <option value="Marié">Marié</option>
+                          <option value="Célibataire">Célibataire</option>
+                          <option value="Divorcé">Divorcé</option>
+                          <option value="Veuve">Veuve</option>
+                        </select>
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Lieu de Résidence :</h5></label>
+                        <select name="reside" id="reside" class="form-control">
+                          <option value="Abidjan">Abidjan</option>
+                          <option value="Hors Abidjan">Hors Abidjan</option>
+                        </select>
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Précisez le lieu de Résidence :</h5></label>
+                        <input type="text" name="Precise" id="Precise" class="form-control" placeholder="Précisez le lieu de Résidence" autocomplete="off">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-4">
+                        <label><h5>Type de logement :</h5></label>
+                        <select id="Type_log" name="Type_log" class="form-control">
+                          <option value="Baraquement">Baraquement</option>
+                          <option value="Cour commune">Cour commune</option>
+                          <option value="Studio">Studio</option>
+                          <option value="Villa">Villa</option>
+                          <option value="Autre">Autre</option>
+                        </select>
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Niveau d'étude :</h5></label>
+                        <select id="NiveauE" name="NiveauE" class="form-control">
+                          <option value="Aucun">Aucun</option>
+                          <option value="Primaire">Primaire</option>
+                          <option value="Secondaire">Secondaire</option>
+                          <option value="Universitaire">Universitaire</option>
+                        </select>
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Profession :</h5></label>
+                        <select id="Profession" name="Profession" class="form-control">
+                          <option value="Aucun">Aucun</option>
+                          <option value="Etudiant">Etudiant</option>
+                          <option value="Eleve">Eleve</option>
+                          <option value="Corps habillé">Corps habillé</option>
+                          <option value="Cadre superieur">Cadre supérieur</option>
+                          <option value="Cadre moyen">Cadre moyen</option>
+                          <option value="Secteur informel">Secteur informel</option>
+                          <option value="Sans profession">Sans profession</option>
+                          <option value="Retraité">Retraité</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mt-5">
+                      <input type="submit" class="btn btn-primary btn-block" value="Créer">
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Scripts -->
+  <script src="../vendor/jquery/jquery.min.js"></script>
+  <script src="../vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../vendor/jquery-easing/jquery.easing.min.js"></script>
+  <script src="../js/ruang-admin.min.js"></script>
+
+  <!-- Script personnalisé pour activer/désactiver le champ "Precise" -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const selectReside = document.getElementById("reside");
+      const inputPrecise = document.getElementById("Precise");
+
+      function togglePreciseField() {
+        if (selectReside.value === "Abidjan") {
+          inputPrecise.disabled = true;
+          inputPrecise.value = "";
+          inputPrecise.classList.add("bg-second");
+        } else {
+          inputPrecise.disabled = false;
+          inputPrecise.classList.remove("bg-light");
+        }
+      }
+
+      togglePreciseField(); // Au chargement
+      selectReside.addEventListener("change", togglePreciseField);
+    });
+  </script>
+</body>
+
+</html>

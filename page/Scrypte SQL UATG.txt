@@ -1,0 +1,183 @@
+CREATE TABLE PATIENT(
+   Numero_urap VARCHAR(50),
+   Nom VARCHAR(150) NOT NULL,
+   Prenom VARCHAR(150) NOT NULL,
+   Sexe VARCHAR(50) NOT NULL,
+   Date_naissance DATE NOT NULL,
+   Contact VARCHAR(50) NOT NULL,
+   Adresse VARCHAR(250),
+   Situation_matrimonaile VARCHAR(50),
+   Lieu_résidence VARCHAR(50),
+   type_de_logement VARCHAR(50),
+   nationalité VARCHAR(50),
+   Type_logement VARCHAR(50),
+   Niveau_etude VARCHAR(50),
+   Profesion VARCHAR(50),
+   PRIMARY KEY(Numero_urap)
+);
+
+CREATE TABLE utilisateur(
+   ID_utilisateur INT,
+   Nom VARCHAR(150) NOT NULL,
+   Prenom VARCHAR(150) NOT NULL,
+   Email VARCHAR(250) NOT NULL,
+   Mot_passe VARCHAR(250) NOT NULL,
+   Contact VARCHAR(50) NOT NULL,
+   Type_utilisateurs VARCHAR(50) NOT NULL,
+   PRIMARY KEY(ID_utilisateur)
+);
+
+CREATE TABLE PRESCRITEUR(
+   ID_prescripteur INT,
+   Nom VARCHAR(150) NOT NULL,
+   Prenom VARCHAR(150) NOT NULL,
+   Contact VARCHAR(50),
+   Structure_provenance VARCHAR(50) NOT NULL,
+   PRIMARY KEY(ID_prescripteur)
+);
+
+CREATE TABLE EXAMEN_CYTOBACTERIOLOGIQUE_SECRETION_CERVICO_VAGINALES(
+   ID_examens INT,
+   Examen_macroscopique_muqueuse_vaginale VARCHAR(150) NOT NULL,
+   Examen_macroscopique_ecoulement_vaginal_abondance VARCHAR(150) NOT NULL,
+   Examen_macroscopique_ecoulement_vaginal_aspect VARCHAR(150) NOT NULL,
+   Examen_macroscopique_ecoulement_vaginal_couleur VARCHAR(150) NOT NULL,
+   Examen_macroscopique_ecoulement_vaginal_odeur VARCHAR(150) NOT NULL,
+   Examen_macroscopique_ph VARCHAR(50) NOT NULL,
+   Examen_macroscopique_test_potasse VARCHAR(50) NOT NULL,
+   Examen_macroscopique_exocol VARCHAR(50) NOT NULL,
+   Examen_macroscopique_ecoulement_cervical VARCHAR(50) NOT NULL,
+   Examen_microscopique_secretions_vaginales_examen_etat_frais_cellules_epitheliales INT NOT NULL,
+   Examen_microscopique_secretions_vaginales_examen_etat_fraiis_trichomonas_vaginalis VARCHAR(50) NOT NULL,
+   Examen_microscopique_secretions_vaginales_examen_etat_fraiis_leucocyte INT NOT NULL,
+   Examen_microscopique_secretions_vaginales_examen_etat_fraiis_levures_filaments_myceliens VARCHAR(50) NOT NULL,
+   Examen_microscopique_secretions_vaginales_frottis_colere_gram_polynucleaires INT NOT NULL,
+   Examen_microscopique_secretions_vaginales_frottis_colere_gram_flore_vaginale VARCHAR(50) NOT NULL,
+   Examen_microscopique_secretions_vaginales_frottis_colere_gram_mobiluncus VARCHAR(50) NOT NULL,
+   Examen_microscopique_secretions_vaginales_frottis_colere_gram_score VARCHAR(50),
+   Examen_microscopique_secretions_endocervicales_polynucleaire INT NOT NULL,
+   Examen_microscopique_secretions_endocervicales_lymphocyte VARCHAR(50),
+   interpretation VARCHAR(50),
+   culture_secretion_vaginale VARCHAR(50) NOT NULL,
+   culture_secretion_cervicale VARCHAR(50) NOT NULL,
+   Nom_techniciens VARCHAR(50) NOT NULL,
+   interpretation_cytoBac_secre_cerviVagi VARCHAR(50),
+   PRIMARY KEY(ID_examens)
+);
+
+CREATE TABLE EXAMEN_CYTOBACTERIOLOGIQUE_SECRETIONS_URETRALES(
+   ID_examen_secretion_uretrales INT,
+   Examen_macroscopique_ecoulement_ VARCHAR(50) NOT NULL,
+   Examen_microscopique_secretions_uretrales_frottis_colore_gram_polynucleaire INT NOT NULL,
+   Examen_microscopique_secretions_uretrales_frottis_colore_gram_cocci_gram_negatif VARCHAR(50) NOT NULL,
+   Examen_microscopique_secretions_uretrales_frottis_colore_gram_autre_flore VARCHAR(50) NOT NULL,
+   culture_secretion_uretrale VARCHAR(50) NOT NULL,
+   Nom_techniciens VARCHAR(50) NOT NULL,
+   interpretation_cytoBac_secre_ure VARCHAR(50),
+   PRIMARY KEY(ID_examen_secretion_uretrales)
+);
+
+CREATE TABLE EXAMEN_CYTOBACTERIOLOGIQUE_SPERME(
+   ID_examen_sperme INT,
+   Examen_microscopique_examen_etat_frais_nombre_leucocyte INT NOT NULL,
+   Examen_microscopique_examen_etat_frais_spermatozoide VARCHAR(50) NOT NULL,
+   Examen_macroscopique_couleur VARCHAR(50) NOT NULL,
+   Examen_microscopique_examen_etat_frais_monilite INT NOT NULL,
+   Examen_microscopique_examen_etat_frais_parasite VARCHAR(50) NOT NULL,
+   Examen_microscopique_examen_etat_frais_cristaux VARCHAR(50) NOT NULL,
+   Examen_microscopique_examen_etat_frais_especes_bacteriennes_isolees VARCHAR(50) NOT NULL,
+   Examen_microscopique_examen_etat_frais_titre VARCHAR(50),
+   culture VARCHAR(50) NOT NULL,
+   Nom_techniciens VARCHAR(50) NOT NULL,
+   interpretation_cytoBac_sperme VARCHAR(50),
+   PRIMARY KEY(ID_examen_sperme)
+);
+
+CREATE TABLE HABITUDE_SEXUELLES(
+   ID_habitude INT,
+   Quel_type_rapport_avez_vous_ VARCHAR(50),
+   Pratiquez_vous__fellation VARCHAR(50),
+   pratiquez_vous_cunni VARCHAR(50),
+   Avez_vous_changé_partenais_ces_deux_derniers_mois VARCHAR(50),
+   Utilisez_vous_preservatif VARCHAR(50),
+   PRIMARY KEY(ID_habitude)
+);
+
+CREATE TABLE HISTORE_MALADIE_RECOURS_SOINS(
+   ID_histoire_maladie INT,
+   Motif_consultation VARCHAR(50),
+   Signe_fonctionnels VARCHAR(50),
+   PRIMARY KEY(ID_histoire_maladie)
+);
+
+CREATE TABLE ANTECEDENTS_IST_GENICOLOGIQUES(
+   ID_antecedants INT,
+   Avez_vous_eu_des_pertes_vaginales_ces_deux_derniers_mois VARCHAR(50) NOT NULL,
+   Avez_vous_eu_des_douleurs_au_bas_ventre_ces_deux_derniers_mois VARCHAR(50),
+   Avez_vous_eu_des_plaies_vaginales_ces_deux_derniers_mois VARCHAR(50) NOT NULL,
+   Avez_vous_eu_mal_au_cours_des_derniers_rapports_sexuels VARCHAR(50) NOT NULL,
+   Antecedant_ist_genicologique_gestité VARCHAR(50),
+   Antecedant_ist_genicologique_parité VARCHAR(50),
+   Date_des_dernieres_regles VARCHAR(50) NOT NULL,
+   Avez_vous_eu__ivg_cette_annee__moins_d_un_an_ VARCHAR(50) NOT NULL,
+   Praiquez_vs_toillette_vaginale_avec_les_doigts VARCHAR(50) NOT NULL,
+   Si_oui_avec_quoi VARCHAR(50),
+   autre_produit VARCHAR(50),
+   etes_vous VARCHAR(50) NOT NULL,
+   Quels_tampons_utilisez_vous_pdt_les_regles VARCHAR(50) NOT NULL,
+   Qui_avez_vous_consulté_pour_ces_signes VARCHAR(50) NOT NULL,
+   Vous_a_t_il_prescrit_des_medicaments VARCHAR(50) NOT NULL,
+   Si_oui_preciser VARCHAR(50),
+   Depuis_combien_temps_vous_vous_traitez VARCHAR(50) NOT NULL,
+   avez_vous VARCHAR(50),
+   Prenez_vous_antibiotique_actuellement VARCHAR(50) NOT NULL,
+   si_oui_preciser_antibiotique VARCHAR(50),
+   PRIMARY KEY(ID_antecedants)
+);
+
+CREATE TABLE VISITE(
+   ID_visite INT,
+   Date_visite DATE NOT NULL,
+   Heure_visite TIME NOT NULL,
+   Motif_visite VARCHAR(250) NOT NULL,
+   ID_antecedants INT NOT NULL,
+   ID_histoire_maladie INT NOT NULL,
+   ID_habitude INT NOT NULL,
+   ID_prescripteur INT NOT NULL,
+   Numero_urap VARCHAR(50) NOT NULL,
+   ID_utilisateur INT NOT NULL,
+   PRIMARY KEY(ID_visite),
+   UNIQUE(ID_antecedants),
+   UNIQUE(ID_histoire_maladie),
+   UNIQUE(ID_habitude),
+   FOREIGN KEY(ID_antecedants) REFERENCES ANTECEDENTS_IST_GENICOLOGIQUES(ID_antecedants),
+   FOREIGN KEY(ID_histoire_maladie) REFERENCES HISTORE_MALADIE_RECOURS_SOINS(ID_histoire_maladie),
+   FOREIGN KEY(ID_habitude) REFERENCES HABITUDE_SEXUELLES(ID_habitude),
+   FOREIGN KEY(ID_prescripteur) REFERENCES PRESCRITEUR(ID_prescripteur),
+   FOREIGN KEY(Numero_urap) REFERENCES PATIENT(Numero_urap),
+   FOREIGN KEY(ID_utilisateur) REFERENCES utilisateur(ID_utilisateur)
+);
+
+CREATE TABLE ECHANTILLON(
+   ID_echantillon INT,
+   Type_echantillons VARCHAR(50) NOT NULL,
+   Date_prelevement DATE NOT NULL,
+   ID_examen_sperme INT NOT NULL,
+   ID_examen_secretion_uretrales INT NOT NULL,
+   ID_examens INT NOT NULL,
+   PRIMARY KEY(ID_echantillon),
+   UNIQUE(ID_examen_sperme),
+   UNIQUE(ID_examen_secretion_uretrales),
+   UNIQUE(ID_examens),
+   FOREIGN KEY(ID_examen_sperme) REFERENCES EXAMEN_CYTOBACTERIOLOGIQUE_SPERME(ID_examen_sperme),
+   FOREIGN KEY(ID_examen_secretion_uretrales) REFERENCES EXAMEN_CYTOBACTERIOLOGIQUE_SECRETIONS_URETRALES(ID_examen_secretion_uretrales),
+   FOREIGN KEY(ID_examens) REFERENCES EXAMEN_CYTOBACTERIOLOGIQUE_SECRETION_CERVICO_VAGINALES(ID_examens)
+);
+
+CREATE TABLE ASSOCIER(
+   ID_visite INT,
+   ID_echantillon INT,
+   PRIMARY KEY(ID_visite, ID_echantillon),
+   FOREIGN KEY(ID_visite) REFERENCES VISITE(ID_visite),
+   FOREIGN KEY(ID_echantillon) REFERENCES ECHANTILLON(ID_echantillon)
+);
