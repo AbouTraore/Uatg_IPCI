@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand navbar-light bg-info topbar mb-4 static-top shadow">
+<nav class="navbar navbar-expand navbar-light bg-primary topbar mb-4 static-top shadow">
 
 <!-- Sidebar Toggle (Topbar) -->
 <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
@@ -12,7 +12,7 @@
         <input type="text" class="form-control bg-light border-0 small" placeholder="Recherche ..."
             aria-label="Search" aria-describedby="basic-addon2">
         <div class="input-group-append">
-            <button class="btn btn-info" type="button">
+            <button class="btn btn-primary" type="button">
                 <i class="fas fa-search fa-sm"></i>
             </button>
         </div>
