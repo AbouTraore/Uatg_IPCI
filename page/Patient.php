@@ -16,21 +16,81 @@
   <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
   <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="../css/ruang-admin.min.css" rel="stylesheet">
+  <style>
+      :root {
+          --primary-bg: #ffffff; /* Background blanc */
+          --header-bg: #0047ab; /* Bleu foncé */
+          --text-color: #0047ab; /* Texte bleu foncé */
+          --input-bg: #ffffff; /* Fond d'input blanc */
+          --input-text: #333333; /* Texte sombre */
+          --button-bg: #0047ab; /* Fond du bouton bleu foncé */
+          --button-text: #ffffff; /* Texte du bouton blanc */
+          --button-hover: #1e90ff; /* Bleu clair au survol */
+          --border-radius: 8px;
+          --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      body {
+          font-family: Arial, sans-serif;
+          background-color: var(--primary-bg);
+          color: var(--text-color);
+      }
+
+      .container-login {
+          max-width: 1400px; /* Largeur augmentée */
+          margin: auto;
+          padding: 20px;
+      }
+
+      .card {
+          border-radius: var(--border-radius);
+          box-shadow: var(--box-shadow);
+      }
+
+      .login-form h3 {
+          color: var(--text-color);
+      }
+
+      .form-control {
+          border: 1px solid #0047ab; /* Bordure bleue */
+      }
+
+      .btn {
+          background-color: var(--button-bg);
+          color: var(--button-text);
+      }
+
+      .btn:hover {
+          background-color: var(--button-hover);
+      }
+
+      .form-group {
+          margin-bottom: 20px; /* Espacement entre les champs */
+      }
+
+      .header {
+          background-color: var(--header-bg);
+          color: var(--button-text);
+          padding: 10px;
+          text-align: center;
+          border-radius: var(--border-radius) var(--border-radius) 0 0; /* Arrondir le haut */
+      }
+  </style>
 </head>
 
-<body class="bg-gradient-login">
+<body>
   <!-- Register Content -->
   <div class="container-login">
     <div class="row justify-content-center">
       <div class="col-xl-10 col-lg-12 col-md-9">
         <div class="card shadow-sm my-5">
+          <div class="header">
+            <h3 class="text-gray-900 mb-4">Information du patient</h3>
+          </div>
           <div class="card-body p-0">
             <div class="row">
               <div class="col-lg-12">
                 <div class="login-form">
-                  <div class="text-center">
-                    <h3 class="text-gray-900 mb-4">Information du patient</h3>
-                  </div>
                   <form method="POST" action="Insert_patient.php" class="form border rounded p-4 bg-white shadow-sm">
                     <div class="form-row">
                       <div class="form-group col-md-4">
