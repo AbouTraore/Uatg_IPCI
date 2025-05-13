@@ -1,3 +1,7 @@
+<?php
+// Start the PHP file
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6,16 +10,16 @@
     <title>Nouveau Dossier</title>
     <style>
         :root {
-            --primary-bg: #001440;
-            --header-bg: #001c57;
-            --text-color: #ffffff;
-            --input-bg: #ffffff;
-            --input-text: #333333;
-            --button-bg: #ffffff;
-            --button-text: #001c57;
-            --button-hover: #e0e0e0;
+            --primary-bg: #ffffff; /* White background */
+            --header-bg: #0047ab; /* Dark blue */
+            --text-color: #0047ab; /* Dark blue text */
+            --input-bg: #ffffff; /* White input */
+            --input-text: #333333; /* Dark text */
+            --button-bg: #0047ab; /* Dark blue button */
+            --button-text: #ffffff; /* White text for buttons */
+            --button-hover: #1e90ff; /* Lighter blue on hover */
             --border-radius: 8px;
-            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -37,7 +41,7 @@
             width: 100%;
             max-width: 1000px;
             margin: 0 auto;
-            background-color: var(--header-bg);
+            background-color: var(--primary-bg);
             box-shadow: var(--box-shadow);
             border-radius: var(--border-radius);
             padding: 20px;
@@ -49,6 +53,10 @@
             margin-bottom: 20px;
             text-align: center;
             text-transform: uppercase;
+            background-color: var(--header-bg);
+            color: var(--button-text);
+            padding: 10px;
+            border-radius: var(--border-radius);
         }
 
         .form-grid {
@@ -69,13 +77,14 @@
             font-size: 1.1em;
             white-space: nowrap;
             text-align: left;
+            color: var(--text-color);
         }
 
         input,
         select {
             background-color: var(--input-bg);
             color: var(--input-text);
-            border: 1px solid #ccc;
+            border: 1px solid #0047ab; /* Dark blue border */
             padding: 10px 15px;
             flex-grow: 1;
             font-size: 1em;
@@ -241,7 +250,7 @@
                         <option value="aucun">Aucun</option>
                         <option value="etudiant">Étudiant</option>
                         <option value="eleve">Élève</option>
-                        <option value="corps_habille">Corps habillét</option>
+                        <option value="corps_habille">Corps habillé</option>
                         <option value="retraite">Retraité</option>
                         <option value="sans_profession">Sans profession</option>
                         <option value="cadre_superieur">Cadre superieur</option>
@@ -262,3 +271,7 @@
     </div>
 </body>
 </html>
+
+<?php
+// End the PHP file
+?>
