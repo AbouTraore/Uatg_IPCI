@@ -1,3 +1,38 @@
+<?php
+// Initialiser les variables
+$message = '';
+$erreur = '';
+$nom = '';
+$prenom = '';
+$age = '';
+$id = '';
+$medecin = '';
+
+// Traiter le formulaire si soumis
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Récupérer les données du formulaire
+    $nom = $_POST['nom'] ?? '';
+    $prenom = $_POST['prenom'] ?? '';
+    $age = $_POST['age'] ?? '';
+    $id = $_POST['id'] ?? '';
+    $medecin = $_POST['medecin'] ?? '';
+    
+    // Vérifier si tous les champs requis sont remplis
+    if (empty($nom) || empty($prenom) || empty($age) || empty($id) || empty($medecin)) {
+        $erreur = "Veuillez remplir tous les champs obligatoires";
+    } else {
+        // Tous les champs sont remplis, rediriger vers echantillon_femelle.php
+        // Enregistrer les données du formulaire dans la session
+        session_start();
+        $_SESSION['vag_data'] = $_POST;
+        
+        // Rediriger vers la page suivante
+        header("Location: echantillon_femelle.php");
+        exit();
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -131,6 +166,11 @@
             color: var(--primary-color);
         }
 
+        .required::after {
+            content: " *";
+            color: var(--error-bg);
+        }
+
         input,
         select {
             background-color: var(--input-bg);
@@ -219,6 +259,11 @@
             color: white;
         }
 
+        .alert-error {
+            background-color: var(--error-bg);
+            color: white;
+        }
+
         .full-width {
             grid-column: 1 / span 2;
         }
@@ -253,23 +298,6 @@
     </style>
 </head>
 <body>
-    <?php
-    // Initialiser les variables
-    $message = '';
-    $medecin = '';
-    
-    // Traiter le formulaire si soumis
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        // Récupérer les données du formulaire
-        $medecin = $_POST['medecin'] ?? '';
-        
-        // Traitement des données (peut être ajouté selon les besoins)
-        
-        // Message de confirmation
-        $message = "Formulaire soumis avec succès !";
-    }
-    ?>
-
     <div class="container">
         <div class="header">EXAMEN CYTOBACTERIOLOGIQUE DES SECRETIONS CERVICO VAGINALES</div>
         
@@ -280,11 +308,40 @@
                 </div>
             <?php endif; ?>
             
+            <?php if (!empty($erreur)): ?>
+                <div class="alert alert-error">
+                    <?php echo $erreur; ?>
+                </div>
+            <?php endif; ?>
+            
             <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                <div class="section-title">Informations Patient</div>
                 <div class="form-section">
-                    <div class="form-field">
-                        <label for="medecin">Médecin prescripteur :</label>
-                        <input type="text" id="medecin" name="medecin" value="<?php echo $medecin; ?>" required>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="id" class="required">N° Identification</label>
+                            <input type="text" id="id" name="id" value="<?php echo $id; ?>" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="age" class="required">Âge</label>
+                            <input type="text" id="age" name="age" value="<?php echo $age; ?>" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="nom" class="required">Nom</label>
+                            <input type="text" id="nom" name="nom" value="<?php echo $nom; ?>" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="prenom" class="required">Prénom</label>
+                            <input type="text" id="prenom" name="prenom" value="<?php echo $prenom; ?>" required>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="medecin" class="required">Médecin prescripteur</label>
+                            <input type="text" id="medecin" name="medecin" value="<?php echo $medecin; ?>" required>
+                        </div>
                     </div>
                 </div>
                 
@@ -292,7 +349,7 @@
                 <div class="form-section">
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="muqueuse_vaginale">Muqueuse vaginale :</label>
+                            <label for="muqueuse_vaginale">Muqueuse vaginale</label>
                             <select name="muqueuse_vaginale" id="muqueuse_vaginale">
                                 <option value="Normale">Normale</option>
                                 <option value="Abondante">Abondante</option>
@@ -300,7 +357,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="ecoulement_vaginal">Écoulement vaginal :</label>
+                            <label for="ecoulement_vaginal">Écoulement vaginal</label>
                             <select name="ecoulement_vaginal" id="ecoulement_vaginal">
                                 <option value="OUI">OUI</option>
                                 <option value="NON">NON</option>
@@ -308,7 +365,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="abondance">Abondance :</label>
+                            <label for="abondance">Abondance</label>
                             <select name="abondance" id="abondance">
                                 <option value="Minime">Minime</option>
                                 <option value="Moyenne">Moyenne</option>
@@ -317,7 +374,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="aspect">Aspect :</label>
+                            <label for="aspect">Aspect</label>
                             <select name="aspect" id="aspect">
                                 <option value="Crémeux">Crémeux</option>
                                 <option value="Caillebotté">Caillebotté</option>
@@ -327,7 +384,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="odeur">Odeur :</label>
+                            <label for="odeur">Odeur</label>
                             <select name="odeur" id="odeur">
                                 <option value="Inodore">Inodore</option>
                                 <option value="Mal-odeur">Mal-odeur</option>
@@ -335,7 +392,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="couleur">Couleur :</label>
+                            <label for="couleur">Couleur</label>
                             <select name="couleur" id="couleur">
                                 <option value="Blanchtre">Blanchâtre</option>
                                 <option value="Grisatre">Grisâtre</option>
@@ -345,7 +402,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="test_potasse">Test à la potasse :</label>
+                            <label for="test_potasse">Test à la potasse</label>
                             <select name="test_potasse" id="test_potasse">
                                 <option value="Positif">Positif</option>
                                 <option value="Négatif">Négatif</option>
@@ -353,12 +410,12 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="ph">Ph :</label>
+                            <label for="ph">Ph</label>
                             <input type="text" id="ph" name="ph">
                         </div>
                         
                         <div class="form-field">
-                            <label for="exocol">Exocol :</label>
+                            <label for="exocol">Exocol</label>
                             <select name="exocol" id="exocol">
                                 <option value="NORMALE">NORMALE</option>
                                 <option value="ANORMALE">ANORMALE</option>
@@ -366,7 +423,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="ecoulement_cervical">Écoulement cervical :</label>
+                            <label for="ecoulement_cervical">Écoulement cervical</label>
                             <select name="ecoulement_cervical" id="ecoulement_cervical">
                                 <option value="ABSENT">ABSENT</option>
                                 <option value="CLAIRE">CLAIRE</option>
@@ -381,12 +438,12 @@
                     <div class="subsection-title">Sécrétions vaginales examen à l'état frais</div>
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="cellules_epitheliales">Cellules épithéliales :</label>
+                            <label for="cellules_epitheliales">Cellules épithéliales</label>
                             <input type="text" id="cellules_epitheliales" name="cellules_epitheliales">
                         </div>
                         
                         <div class="form-field">
-                            <label for="trichomonas">Trichomonas vaginalis :</label>
+                            <label for="trichomonas">Trichomonas vaginalis</label>
                             <select name="trichomonas" id="trichomonas">
                                 <option value="Abscence">Absence</option>
                                 <option value="Présence">Présence</option>
@@ -394,7 +451,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="leucocytes">Leucocytes :</label>
+                            <label for="leucocytes">Leucocytes</label>
                             <select name="leucocytes" id="leucocytes">
                                 <option value="<05/champ"><05/champ</option>
                                 <option value=">05/champ">>05/champ</option>
@@ -402,7 +459,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="levure">Levure et/ou filaments mycéliens :</label>
+                            <label for="levure">Levure et/ou filaments mycéliens</label>
                             <select name="levure" id="levure">
                                 <option value="Abscence">Absence</option>
                                 <option value="Précence">Présence</option>
@@ -413,12 +470,12 @@
                     <div class="subsection-title">Sécrétions vaginales frottis coloré au gram</div>
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="polynucleaires">Polynucléaires :</label>
+                            <label for="polynucleaires">Polynucléaires</label>
                             <input type="text" id="polynucleaires" name="polynucleaires">
                         </div>
                         
                         <div class="form-field">
-                            <label for="flore_vaginale">Flore vaginale :</label>
+                            <label for="flore_vaginale">Flore vaginale</label>
                             <select name="flore_vaginale" id="flore_vaginale">
                                 <option value="Normal type I">Normal type I</option>
                                 <option value="Normal type II">Normal type II</option>
@@ -426,7 +483,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="clue_cells">Clue cells :</label>
+                            <label for="clue_cells">Clue cells</label>
                             <select name="clue_cells" id="clue_cells">
                                 <option value="Abscence">Absence</option>
                                 <option value="Précence">Présence</option>
@@ -434,7 +491,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="mobiluncus">Mobiluncus :</label>
+                            <label for="mobiluncus">Mobiluncus</label>
                             <select name="mobiluncus" id="mobiluncus">
                                 <option value="Abscence">Absence</option>
                                 <option value="Précence">Présence</option>
@@ -442,7 +499,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="score">Score :</label>
+                            <label for="score">Score</label>
                             <input type="text" id="score" name="score">
                         </div>
                     </div>
@@ -450,7 +507,7 @@
                     <div class="subsection-title">Sécrétions endocervicales</div>
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="polynucleaires_endo">Polynucléaires :</label>
+                            <label for="polynucleaires_endo">Polynucléaires</label>
                             <select name="polynucleaires_endo" id="polynucleaires_endo">
                                 <option value="<05/champ"><05/champ</option>
                                 <option value=">05/champ">>05/champ</option>
@@ -458,7 +515,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="lymphocytes">Lymphocytes :</label>
+                            <label for="lymphocytes">Lymphocytes</label>
                             <input type="text" id="lymphocytes" name="lymphocytes">
                         </div>
                     </div>
@@ -468,7 +525,7 @@
                 <div class="form-section">
                     <div class="form-grid">
                         <div class="form-field">
-                            <label for="secretions_vaginales">Sécrétions vaginales :</label>
+                            <label for="secretions_vaginales">Sécrétions vaginales</label>
                             <select name="secretions_vaginales" id="secretions_vaginales">
                                 <option value="Absence de colonie de levure">Absence de colonie de levure</option>
                                 <option value="Présence de colonie de levure">Présence de colonie de levure</option>
@@ -476,7 +533,7 @@
                         </div>
                         
                         <div class="form-field">
-                            <label for="secretions_cervicales">Sécrétions cervicales :</label>
+                            <label for="secretions_cervicales">Sécrétions cervicales</label>
                             <select name="secretions_cervicales" id="secretions_cervicales">
                                 <option value="Absence de colonie sur les milieux usuels">Absence de colonie sur les milieux usuels</option>
                                 <option value="Présence de colonie sur les milieux usuels">Présence de colonie sur les milieux usuels</option>
@@ -488,7 +545,7 @@
                 <div class="button-group">
                     <button type="button" class="btn btn-secondary" onclick="window.history.back()">Retour</button>
                     <button type="reset" class="btn btn-danger">Réinitialiser</button>
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="submit" class="btn btn-primary">Soumettre</button>
                 </div>
             </form>
         </div>
