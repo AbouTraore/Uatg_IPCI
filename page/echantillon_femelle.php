@@ -12,8 +12,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $date_prelevement = $_POST['date_prelevement'] ?? '';
     $technicien = $_POST['technicien'] ?? '';
     
-    // Traitement des données (peut être ajouté selon les besoins)
-    
     // Message de confirmation
     $message = "Échantillon enregistré avec succès !";
 }
@@ -276,11 +274,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 gap: 10px;
             }
         }
-
-        /* Dark mode support - Disabled to maintain blue on white */
-        @media (prefers-color-scheme: dark) {
-            /* Keep the light mode theme for dark mode users */
-        }
     </style>
 </head>
 <body>
@@ -325,7 +318,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
                 <div class="right-buttons">
                     <a href="echantillons.php" class="btn btn-secondary" style="text-decoration: none;">Retour aux échantillons</a>
-                    <a href="formulaire_visite.php" class="btn btn-secondary" style="text-decoration: none;">Retour au formulaire</a>
+                    <a href="javascript:history.back()" class="btn btn-secondary" style="text-decoration: none;">Retour au formulaire</a>
                 </div>
             </div>
         </form>

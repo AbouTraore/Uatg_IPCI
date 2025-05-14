@@ -17,9 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $type_echantillon2 = $_POST['type_echantillon2'] ?? '';
     $date_prelevement2 = $_POST['date_prelevement2'] ?? '';
     $technicien2 = $_POST['technicien2'] ?? '';
-    
-    // Traitement des données (peut être ajouté selon les besoins)
-    
+
     // Message de confirmation
     $message = "Échantillons enregistrés avec succès !";
 }
@@ -27,6 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -125,16 +124,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             position: relative;
         }
 
-        h2::before {
-            content: "";
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 80px;
-            height: 2px;
-            background-color: var(--accent-color);
-        }
-
         .form-row {
             display: flex;
             flex-wrap: wrap;
@@ -180,13 +169,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             justify-content: space-between;
             padding: 0 20px 20px;
             gap: 20px;
-        }
-
-        .left-buttons,
-        .right-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
         }
 
         .btn {
@@ -243,21 +225,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             color: white;
         }
 
-        /* Responsive adjustments */
         @media (max-width: 900px) {
             .bottom-buttons {
                 flex-direction: column;
                 align-items: center;
-            }
-            
-            .left-buttons,
-            .right-buttons {
-                justify-content: center;
-                width: 100%;
-            }
-
-            .form-field {
-                width: 100%;
             }
         }
 
@@ -266,116 +237,96 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 padding: 10px;
             }
 
-            .container {
-                border-radius: 0;
-            }
-
-            .echantillons-section {
-                margin: 10px;
-            }
-
-            label {
-                margin-bottom: 5px;
-            }
-
             .btn {
                 width: 100%;
             }
-            
-            .form-row {
-                gap: 10px;
-            }
-        }
-
-        /* Dark mode support - Disabled to maintain blue on white */
-        @media (prefers-color-scheme: dark) {
-            /* Keep the light mode theme for dark mode users */
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">GESTION DES ÉCHANTILLONS</div>
 
-        <?php if (!empty($message)): ?>
-            <div class="alert alert-success">
-                <?php echo $message; ?>
-            </div>
-        <?php endif; ?>
+<div class="container">
+    <div class="header">GESTION DES ÉCHANTILLONS</div>
 
-        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-            <!-- Échantillons -->
-            <div class="echantillons-section">
-                <div class="echantillon-col">
-                    <h2>Échantillon 1</h2>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="type_echantillon1">Type de l'échantillon</label>
-                            <input type="text" id="type_echantillon1" name="type_echantillon1" value="<?php echo $type_echantillon1; ?>" />
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="date_prelevement1">Date prélèvement</label>
-                            <input type="date" id="date_prelevement1" name="date_prelevement1" value="<?php echo $date_prelevement1; ?>" />
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="technicien1">Technicien responsable</label>
-                            <input type="text" id="technicien1" name="technicien1" value="<?php echo $technicien1; ?>" />
-                        </div>
+    <?php if (!empty($message)): ?>
+        <div class="alert alert-success">
+            <?php echo $message; ?>
+        </div>
+    <?php endif; ?>
+
+    <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+        <div class="echantillons-section">
+            <div class="echantillon-col">
+                <h2>Échantillon 1</h2>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="type_echantillon1">Type de l'échantillon</label>
+                        <input type="text" id="type_echantillon1" name="type_echantillon1" value="<?php echo $type_echantillon1; ?>" />
                     </div>
                 </div>
-                <div class="echantillon-col">
-                    <h2>Échantillon 2</h2>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="type_echantillon2">Type de l'échantillon</label>
-                            <input type="text" id="type_echantillon2" name="type_echantillon2" value="<?php echo $type_echantillon2; ?>" />
-                        </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="date_prelevement1">Date prélèvement</label>
+                        <input type="date" id="date_prelevement1" name="date_prelevement1" value="<?php echo $date_prelevement1; ?>" />
                     </div>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="date_prelevement2">Date prélèvement</label>
-                            <input type="date" id="date_prelevement2" name="date_prelevement2" value="<?php echo $date_prelevement2; ?>" />
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="technicien2">Technicien responsable</label>
-                            <input type="text" id="technicien2" name="technicien2" value="<?php echo $technicien2; ?>" />
-                        </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="technicien1">Technicien responsable</label>
+                        <input type="text" id="technicien1" name="technicien1" value="<?php echo $technicien1; ?>" />
                     </div>
                 </div>
             </div>
-
-            <!-- Boutons -->
-            <div class="bottom-buttons">
-                <div class="left-buttons">
-                    <button type="submit" class="btn btn-primary">Enregistrer les échantillons</button>
-                    <a href="echantillon_unique.php" class="btn btn-secondary" style="text-decoration: none;">Échantillon unique</a>
+            <div class="echantillon-col">
+                <h2>Échantillon 2</h2>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="type_echantillon2">Type de l'échantillon</label>
+                        <input type="text" id="type_echantillon2" name="type_echantillon2" value="<?php echo $type_echantillon2; ?>" />
+                    </div>
                 </div>
-                <div class="right-buttons">
-                    <a href="formulaire_visite.php" class="btn btn-secondary" style="text-decoration: none;">Retour au formulaire</a>
-                    <button type="button" class="btn btn-danger" onclick="window.history.back()">Annuler</button>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="date_prelevement2">Date prélèvement</label>
+                        <input type="date" id="date_prelevement2" name="date_prelevement2" value="<?php echo $date_prelevement2; ?>" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="technicien2">Technicien responsable</label>
+                        <input type="text" id="technicien2" name="technicien2" value="<?php echo $technicien2; ?>" />
+                    </div>
                 </div>
             </div>
-        </form>
-    </div>
-    
-    <script>
-        // Dark mode detection
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        </div>
+
+        <div class="bottom-buttons">
+            <div class="left-buttons">
+                <button type="submit" class="btn btn-primary">Enregistrer les échantillons</button>
+                <a href="echantillon_unique.php" class="btn btn-secondary" style="text-decoration: none;">Échantillon unique</a>
+            </div>
+            <div class="right-buttons">
+                <a href="javascript:history.back()" class="btn btn-secondary" style="text-decoration: none;">Retour au formulaire</a>
+                <button type="button" class="btn btn-danger" onclick="window.history.back()">Annuler</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Dark mode detection
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+        if (event.matches) {
             document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
         }
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-            if (event.matches) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        });
-    </script>
+    });
+</script>
 </body>
+
 </html>
