@@ -46,10 +46,18 @@ require_once("identifier.php");
         
 
             <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item">
-                    <a class="nav-link" href="Patient.php">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span>Visite</span></a>
+           <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseForm" aria-expanded="true"
+                aria-controls="collapseForm">
+                <i class="fas fa-users text-info"></i>
+                <span>Patients</span>
+                </a>
+                <div id="collapseForm" class="collapse" aria-labelledby="headingForm" data-parent="#accordionSidebar">
+                <div class="bg-white py-3 collapse-inner rounded">
+                    <h6 class="collapse-header">Patients</h6>
+                    <a class="collapse-item" href="Patient.php">Liste des Patient</a>
+                </div>
+                </div>
             </li>
 
             <!-- Nav Item - Charts -->
