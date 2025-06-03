@@ -130,9 +130,9 @@ if ($reste === 0) {
                         <td><?php echo $patient["Precise"] ?></td>
                         <td><?php echo $patient["Profession"] ?></td>
                         <td>
-                          <a onclick="return confirm('etes vous sur de vouloir modifier cet Utilisateur')" href="modifierpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"><i class="fa fa-edit text-success" aria-hidden="true"></a></i>
+                          <a onclick="return confirm('etes vous sur de vouloir modifier cet Utilisateur')" href="modifpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"><i class="fa fa-edit text-success" aria-hidden="true"></a></i>
                            &nbsp;
-                          <a onclick="return confirm('etes vous sur de vouloir supprimer cet user')" href="supprimerpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"><i class="fa fa-trash text-danger" aria-hidden="true"></a></i>
+                          <a onclick="return confirm('etes vous sur de vouloir supprimer cet user')" href="supprimpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"><i class="fa fa-trash text-danger" aria-hidden="true"></a></i>
                           &nbsp;
                           </a>
                         </td>
