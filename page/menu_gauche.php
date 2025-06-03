@@ -55,6 +55,7 @@ require_once("identifier.php");
                 <div id="collapseForm" class="collapse" aria-labelledby="headingForm" data-parent="#accordionSidebar">
                 <div class="bg-white py-3 collapse-inner rounded">
                     <h6 class="collapse-header">Patients</h6>
+                    <a class="collapse-item" href="ajouter_patient.php">Ajouter un Patient</a> <!-- Nouveau lien -->
                     <a class="collapse-item" href="Patient.php">Liste des Patient</a>
                 </div>
                 </div>
