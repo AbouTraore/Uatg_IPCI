@@ -1,29 +1,23 @@
-<?php 
+<?php
 require_once("identifier.php");
 require_once("connexion.php");
 
 
-$N_Urap=isset($_GET['Numero_urap'])?$_GET['Numero_urap']:0;
-$reqpatient="SELECT * FROM patient where Numero_urap=$N_Urap";
-$resultat=$pdo->query($reqpatient);
-$patient=$resultat->fetch();
-$N_Urap=$patient['Numero_urap'];
-$Nom=$patient['Nom_patient']; 
-$Prenom=$patient['Prenom_patient']; 
-$Age=$patient['Age'];  
-$datenaiss=$patient['Date_naissance'];
-$SexeP=strtoupper($patient['Sexe_patient']); 
-$contact=$patient['Contact_patient'];
-$SituaM=$patient['Situation_matrimoniale'];
-$Lieu_résidence=$patient['Lieu_résidence']; 
-$Precise=$patient['Precise']; 
-$Type_log=$patient['Type_logement'];
-$NiveauE=$patient['Niveau_etude'];
-$Profession=$patient['Profession']; 
+($patient !== false && is_array($patient)) {
+$maliste=array('Numero_urap','Nom_patient','Prenom_patient','Age','Date_naissance','Sexe_patient','Contact_patient',
+'Situation_matrimoniale','Lieu_résidence','Precise','Type_logement','Niveau_etude','Profession');
 
+}
+$patient=array();
+foreach ($maliste as $element){
+    $patient=[]=$element;
+}
 
-
+print_r($patient);
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="fr">
