@@ -18,14 +18,14 @@
   <link href="../css/ruang-admin.min.css" rel="stylesheet">
   <style>
       :root {
-          --primary-bg: #ffffff; /* Background blanc */
-          --header-bg: #0047ab; /* Bleu foncé */
-          --text-color: #0047ab; /* Texte bleu foncé */
-          --input-bg: #ffffff; /* Fond d'input blanc */
-          --input-text: #333333; /* Texte sombre */
-          --button-bg: #0047ab; /* Fond du bouton bleu foncé */
-          --button-text: #ffffff; /* Texte du bouton blanc */
-          --button-hover: #1e90ff; /* Bleu clair au survol */
+          --primary-bg: #ffffff;
+          --header-bg: #0047ab;
+          --text-color: #0047ab;
+          --input-bg: #ffffff;
+          --input-text: #333333;
+          --button-bg: #0047ab;
+          --button-text: #ffffff;
+          --button-hover: #1e90ff;
           --border-radius: 8px;
           --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       }
@@ -37,7 +37,7 @@
       }
 
       .container-login {
-          max-width: 1400px; /* Largeur augmentée */
+          max-width: 1400px;
           margin: auto;
           padding: 20px;
       }
@@ -52,7 +52,7 @@
       }
 
       .form-control {
-          border: 1px solid #0047ab; /* Bordure bleue */
+          border: 1px solid #0047ab;
       }
 
       .btn {
@@ -65,7 +65,7 @@
       }
 
       .form-group {
-          margin-bottom: 20px; /* Espacement entre les champs */
+          margin-bottom: 20px;
       }
 
       .header {
@@ -73,13 +73,12 @@
           color: var(--button-text);
           padding: 10px;
           text-align: center;
-          border-radius: var(--border-radius) var(--border-radius) 0 0; /* Arrondir le haut */
+          border-radius: var(--border-radius) var(--border-radius) 0 0;
       }
   </style>
 </head>
 
 <body>
-  <!-- Register Content -->
   <div class="container-login">
     <div class="row justify-content-center">
       <div class="col-xl-10 col-lg-12 col-md-9">
@@ -108,8 +107,12 @@
                     </div>
                     <div class="form-row">
                       <div class="form-group col-md-4">
-                        <label><h5>Age :</h5></label>
-                        <input type="text" name="Age" id="Age" class="form-control" required placeholder="Taper votre âge" autocomplete="off">
+                        <label><h5>Date de naissance :</h5></label>
+                        <input type="date" name="datenaiss" id="datenaiss" class="form-control" required autocomplete="off">
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label><h5>Âge :</h5></label>
+                        <input type="text" name="Age" id="Age" class="form-control" readonly placeholder="l'âge du patient">
                       </div>
                       <div class="form-group col-md-4">
                         <label><h5>Sexe :</h5></label>
@@ -117,10 +120,6 @@
                           <option value="Masculin">Masculin</option>
                           <option value="Féminin">Féminin</option>
                         </select>
-                      </div>
-                      <div class="form-group col-md-4">
-                        <label><h5>Date de naissance :</h5></label>
-                        <input type="date" name="datenaiss" id="datenaiss" class="form-control" required autocomplete="off">
                       </div>
                     </div>
                     <div class="form-row">
@@ -209,7 +208,7 @@
   <script src="../vendor/jquery-easing/jquery.easing.min.js"></script>
   <script src="../js/ruang-admin.min.js"></script>
 
-  <!-- Script personnalisé pour activer/désactiver le champ "Precise" -->
+  <!-- Script pour activer/désactiver le champ "Precise" -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const selectReside = document.getElementById("reside");
@@ -226,10 +225,26 @@
         }
       }
 
-      togglePreciseField(); // Au chargement
+      togglePreciseField();
       selectReside.addEventListener("change", togglePreciseField);
+    });
+
+    // Script de calcul de l’âge en fonction de la date de naissance
+    document.addEventListener("DOMContentLoaded", function () {
+      const dateInput = document.getElementById("datenaiss");
+      const ageInput = document.getElementById("Age");
+
+      dateInput.addEventListener("input", function () {
+        const birthDate = new Date(this.value);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        ageInput.value = isNaN(age) || age < 0 ? "" : age;
+      });
     });
   </script>
 </body>
-
 </html>
