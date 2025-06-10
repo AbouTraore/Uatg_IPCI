@@ -1,4 +1,7 @@
 <?php
+// Connexion à la base de données
+require_once("identifier.php");
+require_once("connexion.php");
 // Initialiser les variables pour stocker les données du formulaire
 $id = $age = $nom = $prenom = $medecin = $mobilite = $titre = $compte_rendu = '';
 $erreur = '';
@@ -21,20 +24,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $especes_bacteriennes = $_POST['especes_bacteriennes'] ?? '';
     $titre = $_POST['titre'] ?? '';
     $compte_rendu = $_POST['compte_rendu'] ?? '';
-    
+
     // Vérifier si tous les champs requis sont remplis
-    if (empty($id) || empty($age) || empty($nom) || empty($prenom) || empty($medecin) || 
+    if (empty($id) || empty($age) || empty($nom) || empty($prenom) || empty($medecin) ||
         empty($mobilite) || empty($titre) || empty($compte_rendu)) {
         $erreur = "Veuillez remplir tous les champs obligatoires";
     } else {
-        // Tous les champs sont remplis, rediriger vers echantillon_male.php
-        // Enregistrer les données du formulaire dans la session
-        session_start();
-        $_SESSION['ecs_data'] = $_POST;
-        
-        // Rediriger vers la page suivante
-        header("Location: echantillon_male.php");
-        exit();
+        // Insertion en base
+        $sql = "INSERT INTO ecs (
+            numero_identification, age, nom, prenom, medecin, couleur, nombre_leucocyte,
+            spermatozoide, mobilite, parasite, cristaux, culture, especes_bacteriennes, titre, compte_rendu
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $id, $age, $nom, $prenom, $medecin, $couleur, $nombre_leucocyte,
+            $spermatozoide, $mobilite, $parasite, $cristaux, $culture, $especes_bacteriennes, $titre, $compte_rendu
+        ]);
+        $erreur = "Enregistrement effectué avec succès !";
     }
 }
 ?>

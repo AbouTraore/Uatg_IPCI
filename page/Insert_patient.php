@@ -38,16 +38,28 @@ try {
     $stmt = $pdo->prepare($req);
     $stmt->execute($params);
 
-    echo "<script>alert('Patient enregistré avec succès.'); window.location.href='acceuil.php';</script>";
+    // Message de succès avec nom et prénom
+    echo "<script>
+        alert('✅ SUCCÈS\\n\\nLe patient " . htmlspecialchars($Nom_patient) . " " . htmlspecialchars($Prenom_patient) . " a été enregistré avec succès !\\n\\nNuméro URAP : " . htmlspecialchars($Numero_urap) . "');
+        window.location.href='acceuil.php';
+    </script>";
+    exit();
 
 } catch (PDOException $e) {
     if ($e->getCode() == 23000) {
         // Erreur de doublon (clé unique sur Numero_urap)
-        $msg = "Ce numéro URAP existe déjà. Veuillez en choisir un autre.";
-        header("Location: Alert.php?message=" . urlencode($msg));
+        echo "<script>
+            alert('❌ ERREUR DE DOUBLON\\n\\nLe numéro URAP \"" . htmlspecialchars($Numero_urap) . "\" existe déjà dans la base de données.\\n\\nVeuillez choisir un autre numéro URAP.');
+            window.history.back();
+        </script>";
+        exit();
     } else {
         // Autres erreurs PDO
-        echo "<script>alert('Erreur : " . htmlspecialchars($e->getMessage()) . "');</script>";
+        echo "<script>
+            alert('❌ ERREUR D\\'ENREGISTREMENT\\n\\nUne erreur s\\'est produite lors de l\\'enregistrement du patient.\\n\\nDétails : " . htmlspecialchars($e->getMessage()) . "');
+            window.history.back();
+        </script>";
+        exit();
     }
 }
 ?>

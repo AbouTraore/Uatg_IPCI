@@ -1,4 +1,8 @@
 <?php
+// Connexion à la base de données
+require_once("identifier.php");
+require_once("connexion.php");
+
 // Initialiser les variables
 $message = '';
 $erreur = '';
@@ -11,24 +15,58 @@ $medecin = '';
 // Traiter le formulaire si soumis
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Récupérer les données du formulaire
+    $id = $_POST['id'] ?? '';
     $nom = $_POST['nom'] ?? '';
     $prenom = $_POST['prenom'] ?? '';
     $age = $_POST['age'] ?? '';
-    $id = $_POST['id'] ?? '';
     $medecin = $_POST['medecin'] ?? '';
-    
+    $muqueuse_vaginale = $_POST['muqueuse_vaginale'] ?? '';
+    $ecoulement_vaginal = $_POST['ecoulement_vaginal'] ?? '';
+    $abondance = $_POST['abondance'] ?? '';
+    $aspect = $_POST['aspect'] ?? '';
+    $odeur = $_POST['odeur'] ?? '';
+    $couleur = $_POST['couleur'] ?? '';
+    $test_potasse = $_POST['test_potasse'] ?? '';
+    $ph = $_POST['ph'] ?? '';
+    $exocol = $_POST['exocol'] ?? '';
+    $ecoulement_cervical = $_POST['ecoulement_cervical'] ?? '';
+    $cellules_epitheliales = $_POST['cellules_epitheliales'] ?? '';
+    $trichomonas = $_POST['trichomonas'] ?? '';
+    $leucocytes = $_POST['leucocytes'] ?? '';
+    $levure = $_POST['levure'] ?? '';
+    $polynucleaires = $_POST['polynucleaires'] ?? '';
+    $flore_vaginale = $_POST['flore_vaginale'] ?? '';
+    $clue_cells = $_POST['clue_cells'] ?? '';
+    $mobiluncus = $_POST['mobiluncus'] ?? '';
+    $score = $_POST['score'] ?? '';
+    $polynucleaires_endo = $_POST['polynucleaires_endo'] ?? '';
+    $lymphocytes = $_POST['lymphocytes'] ?? '';
+    $secretions_vaginales = $_POST['secretions_vaginales'] ?? '';
+    $secretions_cervicales = $_POST['secretions_cervicales'] ?? '';
+
     // Vérifier si tous les champs requis sont remplis
     if (empty($nom) || empty($prenom) || empty($age) || empty($id) || empty($medecin)) {
         $erreur = "Veuillez remplir tous les champs obligatoires";
     } else {
-        // Tous les champs sont remplis, rediriger vers echantillon_femelle.php
-        // Enregistrer les données du formulaire dans la session
-        session_start();
-        $_SESSION['vag_data'] = $_POST;
-        
-        // Rediriger vers la page suivante
-        header("Location: echantillon_femelle.php");
-        exit();
+        // Insertion en base
+        $sql = "INSERT INTO exa_cyto_sec_vag (
+            numero_identification, nom, prenom, age, medecin,
+            muqueuse_vaginale, ecoulement_vaginal, abondance, aspect, odeur, couleur, test_potasse, ph, exocol, ecoulement_cervical,
+            cellules_epitheliales, trichomonas, leucocytes, levure,
+            polynucleaires, flore_vaginale, clue_cells, mobiluncus, score,
+            polynucleaires_endo, lymphocytes, secretions_vaginales, secretions_cervicales
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $id, $nom, $prenom, $age, $medecin,
+            $muqueuse_vaginale, $ecoulement_vaginal, $abondance, $aspect, $odeur, $couleur, $test_potasse, $ph, $exocol, $ecoulement_cervical,
+            $cellules_epitheliales, $trichomonas, $leucocytes, $levure,
+            $polynucleaires, $flore_vaginale, $clue_cells, $mobiluncus, $score,
+            $polynucleaires_endo, $lymphocytes, $secretions_vaginales, $secretions_cervicales
+        ]);
+
+        $message = "Enregistrement effectué avec succès !";
+        // Réinitialiser les champs si besoin
     }
 }
 ?>
@@ -552,3 +590,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 </body>
 </html>
+
+CREATE TABLE exa_cyto_sec_vag (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    numero_identification VARCHAR(50),
+    nom VARCHAR(100),
+    prenom VARCHAR(100),
+    age VARCHAR(10),
+    medecin VARCHAR(100),
+    muqueuse_vaginale VARCHAR(50),
+    ecoulement_vaginal VARCHAR(10),
+    abondance VARCHAR(20),
+    aspect VARCHAR(20),
+    odeur VARCHAR(20),
+    couleur VARCHAR(20),
+    test_potasse VARCHAR(10),
+    ph VARCHAR(10),
+    exocol VARCHAR(20),
+    ecoulement_cervical VARCHAR(20),
+    cellules_epitheliales VARCHAR(50),
+    trichomonas VARCHAR(20),
+    leucocytes VARCHAR(20),
+    levure VARCHAR(20),
+    polynucleaires VARCHAR(50),
+    flore_vaginale VARCHAR(50),
+    clue_cells VARCHAR(20),
+    mobiluncus VARCHAR(20),
+    score VARCHAR(10),
+    polynucleaires_endo VARCHAR(20),
+    lymphocytes VARCHAR(50),
+    secretions_vaginales VARCHAR(100),
+    secretions_cervicales VARCHAR(100),
+    date_enregistrement TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

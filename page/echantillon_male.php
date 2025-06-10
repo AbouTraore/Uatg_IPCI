@@ -1,4 +1,8 @@
 <?php
+// Connexion à la base de données
+require_once("identifier.php");
+require_once("connexion.php");
+
 // Initialiser les variables
 $message = '';
 $type_echantillon1 = '';
@@ -10,7 +14,6 @@ $technicien2 = '';
 
 // Traiter le formulaire si soumis
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Récupérer les données du formulaire
     $type_echantillon1 = $_POST['type_echantillon1'] ?? '';
     $date_prelevement1 = $_POST['date_prelevement1'] ?? '';
     $technicien1 = $_POST['technicien1'] ?? '';
@@ -18,7 +21,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $date_prelevement2 = $_POST['date_prelevement2'] ?? '';
     $technicien2 = $_POST['technicien2'] ?? '';
 
-    // Message de confirmation
+    // Insertion en base
+    $sql = "INSERT INTO echantillon_male 
+        (type_echantillon1, date_prelevement1, technicien1, type_echantillon2, date_prelevement2, technicien2)
+        VALUES (?, ?, ?, ?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        $type_echantillon1, $date_prelevement1, $technicien1,
+        $type_echantillon2, $date_prelevement2, $technicien2
+    ]);
+
     $message = "Échantillons enregistrés avec succès !";
 }
 ?>

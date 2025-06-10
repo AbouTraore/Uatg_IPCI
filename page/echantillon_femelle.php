@@ -1,4 +1,9 @@
 <?php
+// Connexion à la base de données
+require_once("identifier.php");
+require_once("connexion.php");
+
+
 // Initialiser les variables
 $message = '';
 $type_echantillon = '';
@@ -11,7 +16,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $type_echantillon = $_POST['type_echantillon'] ?? '';
     $date_prelevement = $_POST['date_prelevement'] ?? '';
     $technicien = $_POST['technicien'] ?? '';
-    
+
+    // Insertion en base
+    $sql = "INSERT INTO echantillon_femelle (type_echantillon, date_prelevement, technicien)
+            VALUES (?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$type_echantillon, $date_prelevement, $technicien]);
+
     // Message de confirmation
     $message = "Échantillon enregistré avec succès !";
 }
