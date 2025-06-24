@@ -24,16 +24,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($id) || empty($age) || empty($nom) || empty($prenom) || empty($medecin)) {
         $erreur = "Veuillez remplir tous les champs obligatoires";
     } else {
-        // Insertion en base
-        $sql = "INSERT INTO ecsu (numero_identification,
-            age,nom, prenom,medecin,culture,ecoulement, frottis_polynu, cocci_gram_negatif,autres_flores
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            $id, $age, $nom, $prenom, $medecin, $ecoulement,
-            $frottis_polynu, $cocci_gram_negatif, $autres_flores, $culture
-        ]);
-        $erreur = "Enregistrement effectué avec succès !";
+        try {
+            // Insertion en base
+            $sql = "INSERT INTO ecsu (numero_identification,
+                age,nom, prenom,medecin,culture,ecoulement, frottis_polynu, cocci_gram_negatif,autres_flores
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $id, $age, $nom, $prenom, $medecin, $culture, $ecoulement,
+                $frottis_polynu, $cocci_gram_negatif, $autres_flores
+            ]);
+            
+            // Redirection vers la page echantillon_male.php après insertion réussie
+            header("Location: echantillon_male.php");
+            exit();
+        } catch (Exception $e) {
+            $erreur = "Erreur lors de l'enregistrement : " . $e->getMessage();
+        }
     }
 }
 ?>

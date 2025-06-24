@@ -6,22 +6,23 @@ require_once("connexion.php");
 
 $name = isset($_GET['name']) ? $_GET['name'] : "";
 
-$size = isset($_GET['size']) ? $_GET['size'] : 3;
-$page = isset($_GET['page']) ? $_GET['page'] : 1;
+$size = isset($_GET['size']) ? intval($_GET['size']) : 3;
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+if ($page < 1) $page = 1;
 $offset = ($page - 1) * $size;
-$reqliste = "SELECT * FROM patient where Nom_patient like '%$name%'";
-$reqcount = "SELECT COUNT(*) countP FROM patient";
-$resultatliste = $pdo->query($reqliste);
-$resultatcount = $pdo->query($reqcount);
-$tabcount = $resultatcount->fetch();
+$reqliste = "SELECT * FROM patient where Nom_patient like ?";
+$reqcount = "SELECT COUNT(*) countP FROM patient WHERE Nom_patient LIKE ?";
+$stmtCount = $pdo->prepare($reqcount);
+$stmtCount->execute(["%$name%"]);
+$tabcount = $stmtCount->fetch();
 $nbrliste = $tabcount['countP'];
 $reste = $nbrliste % $size;
 
-if ($reste === 0) {
-    $nbrPage = $nbrliste / $size;
-} else {
-    $nbrPage = floor($nbrliste / $size) + 1;
-}
+$nbrPage = ($nbrliste > 0) ? ceil($nbrliste / $size) : 1;
+
+$stmtListe = $pdo->prepare($reqliste);
+$stmtListe->execute(["%$name%"]);
+
 ?>
 
 <!DOCTYPE html>
@@ -80,18 +81,14 @@ if ($reste === 0) {
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Liste des patients</h1>
             <div>
-            <form method="get" action="Liste_patient.php" class="form-inline">
+            <form method="get" action="Liste_patient.php" class="form-inline" id="searchForm">
               <div class="form-group">
                 <input type="text" name="name" placeholder="Saisissez votre nom"
-                class="form-control" value="<?php echo $name?>">
+                class="form-control" value="<?php echo $name?>" id="searchInput" autocomplete="off">
               </div>
-              &nbsp &nbsp;
-            <button type="submit" class="btn btn-info"><i class="fa fa-search"></i>
-            chercher...
-            </button>
-            &nbsp &nbsp;
-            <a  class="text-success"href="patient.php"><i class="fa fa-plus  text-success" aria-hidden="true"></i>  Ajouter un patient</a>
-          </form>
+              &nbsp;&nbsp;
+              <a  class="text-success" href="ajouter_patient.php"><i class="fa fa-plus  text-success" aria-hidden="true"></i>  Ajouter un patient</a>
+            </form>
           </div>
           </div>
           <!-- Row -->
@@ -119,7 +116,7 @@ if ($reste === 0) {
                       </tr>
                     </thead >
                     <thead>
-                        <?php while($patient=$resultatliste->fetch()){ ?>
+                        <?php while($patient=$stmtListe->fetch()){ ?>
                         <td><?php echo $patient["Numero_urap"] ?></td>
                         <td><?php echo $patient["Nom_patient"] ?></td>
                         <td><?php echo $patient["Prenom_patient"] ?></td>
@@ -130,11 +127,26 @@ if ($reste === 0) {
                         <td><?php echo $patient["Precise"] ?></td>
                         <td><?php echo $patient["Profession"] ?></td>
                         <td>
-                          <a onclick="return confirm('etes vous sur de vouloir modifier cet Utilisateur')" href="modifpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"><i class="fa fa-edit text-success" aria-hidden="true"></a></i>
-                           &nbsp;
-                          <a onclick="return confirm('etes vous sur de vouloir supprimer cet user')" href="supprimpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"><i class="fa fa-trash text-danger" aria-hidden="true"></a></i>
-                          &nbsp;
+                          <a href="#" class="edit-patient-link"
+                             data-url="modifpatient.php?idU=<?php echo $patient['Numero_urap'] ?>"
+                             data-name="<?php echo $patient['Nom_patient'] ?>"
+                             data-prenom="<?php echo $patient['Prenom_patient'] ?>"
+                             data-urap="<?php echo $patient['Numero_urap'] ?>"
+                             data-contact="<?php echo $patient['Contact_patient'] ?>"
+                             data-profession="<?php echo $patient['Profession'] ?>">
+                             <i class="fa fa-edit text-success" aria-hidden="true"></i>
                           </a>
+                           &nbsp;
+                          <a href="#" class="delete-patient-link" 
+                             data-url="supprimpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"
+                             data-name="<?php echo $patient["Nom_patient"] ?>"
+                             data-prenom="<?php echo $patient["Prenom_patient"] ?>"
+                             data-urap="<?php echo $patient["Numero_urap"] ?>"
+                             data-contact="<?php echo $patient["Contact_patient"] ?>"
+                             data-profession="<?php echo $patient["Profession"] ?>">
+                             <i class="fa fa-trash text-danger" aria-hidden="true"></i>
+                          </a>
+                          &nbsp;
                         </td>
                       </tr>
                       <?php } ?>
@@ -159,13 +171,13 @@ if ($reste === 0) {
                   <nav aria-label="Page navigation example">
                         <ul class="pagination">
                         <?php  for( $i=1;$i<=$nbrPage;$i++ ){?>
-                          <li class="page-item <?php if($i==$page)echo"page-item active"?>">
-                            <a class="page-link" href="Liste_patient.php?page=<?php echo $i; ?>&name=<?php echo $name; ?> ">
+                          <li class="page-item <?php if($i==$page)echo 'active'; ?>">
+                            <a class="page-link" href="Liste_patient.php?page=<?php echo $i; ?>&name=<?php echo urlencode($name); ?>&size=<?php echo $size; ?>">
                               <?php  echo $i;?>
                             </a>
-                          <?php } ?>
-                      </li>
-                        </ul>
+                          </li>
+                        <?php } ?>
+                      </ul>
                  </nav>
                 </div>
               </div>
@@ -226,6 +238,115 @@ if ($reste === 0) {
     <!-- Page level custom scripts -->
     <script src="../js/demo/chart-area-demo.js"></script>
     <script src="../js/demo/chart-pie-demo.js"></script>
+
+    <!-- Modal de confirmation de suppression -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="confirmDeleteLabel">Confirmer la suppression</h5>
+            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="text-center mb-0"><i class="fa fa-exclamation-triangle fa-2x text-danger mb-2"></i></p>
+            <p class="text-center font-weight-bold text-danger">Attention ! Cette action est irréversible.</p>
+            <div class="border rounded bg-light p-3 mb-2">
+              <div><b>Nom :</b> <span id="modalNom"></span></div>
+              <div><b>Prénom :</b> <span id="modalPrenom"></span></div>
+              <div><b>N° URAP :</b> <span id="modalUrap"></span></div>
+              <div><b>Contact :</b> <span id="modalContact"></span></div>
+              <div><b>Profession :</b> <span id="modalProfession"></span></div>
+            </div>
+            <p class="text-center">Voulez-vous vraiment supprimer ce patient ?</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+            <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Supprimer</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de confirmation de modification patient -->
+    <div class="modal fade" id="confirmEditModal" tabindex="-1" role="dialog" aria-labelledby="confirmEditLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="confirmEditLabel">Confirmer la modification</h5>
+            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Fermer">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="text-center mb-0"><i class="fa fa-edit fa-2x text-primary mb-2"></i></p>
+            <div class="border rounded bg-light p-3 mb-2">
+              <div><b>Nom :</b> <span id="modalEditNom"></span></div>
+              <div><b>Prénom :</b> <span id="modalEditPrenom"></span></div>
+              <div><b>N° URAP :</b> <span id="modalEditUrap"></span></div>
+              <div><b>Contact :</b> <span id="modalEditContact"></span></div>
+              <div><b>Profession :</b> <span id="modalEditProfession"></span></div>
+            </div>
+            <p class="text-center">Voulez-vous vraiment modifier ce patient ?</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Annuler</button>
+            <a href="#" id="confirmEditBtn" class="btn btn-primary">Modifier</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // Recherche automatique à la saisie
+    let timer = null;
+    document.getElementById('searchInput').addEventListener('input', function() {
+      clearTimeout(timer);
+      timer = setTimeout(function() {
+        document.getElementById('searchForm').submit();
+      }, 400);
+    });
+
+    // Confirmation stylisée de suppression
+    let deleteLinks = document.querySelectorAll('.delete-patient-link');
+    let confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    let modalNom = document.getElementById('modalNom');
+    let modalPrenom = document.getElementById('modalPrenom');
+    let modalUrap = document.getElementById('modalUrap');
+    let modalContact = document.getElementById('modalContact');
+    let modalProfession = document.getElementById('modalProfession');
+    let deleteUrl = '';
+    deleteLinks.forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        deleteUrl = this.getAttribute('data-url');
+        modalNom.textContent = this.getAttribute('data-name') || '';
+        modalPrenom.textContent = this.getAttribute('data-prenom') || '';
+        modalUrap.textContent = this.getAttribute('data-urap') || '';
+        modalContact.textContent = this.getAttribute('data-contact') || '';
+        modalProfession.textContent = this.getAttribute('data-profession') || '';
+        $('#confirmDeleteModal').modal('show');
+      });
+    });
+    confirmDeleteBtn.addEventListener('click', function(e) {
+      window.location.href = deleteUrl;
+    });
+
+    // Modal de modification patient
+    document.querySelectorAll('.edit-patient-link').forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('modalEditNom').textContent = this.dataset.name;
+        document.getElementById('modalEditPrenom').textContent = this.dataset.prenom;
+        document.getElementById('modalEditUrap').textContent = this.dataset.urap;
+        document.getElementById('modalEditContact').textContent = this.dataset.contact;
+        document.getElementById('modalEditProfession').textContent = this.dataset.profession;
+        document.getElementById('confirmEditBtn').setAttribute('href', this.dataset.url);
+        $('#confirmEditModal').modal('show');
+      });
+    });
+    </script>
 
 </body>
 

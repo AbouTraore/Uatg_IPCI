@@ -30,17 +30,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         empty($mobilite) || empty($titre) || empty($compte_rendu)) {
         $erreur = "Veuillez remplir tous les champs obligatoires";
     } else {
-        // Insertion en base
-        $sql = "INSERT INTO ecs (
-            numero_identification, age, nom, prenom, medecin, couleur, nombre_leucocyte,
-            spermatozoide, mobilite, parasite, cristaux, culture, especes_bacteriennes, titre, compte_rendu
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            $id, $age, $nom, $prenom, $medecin, $couleur, $nombre_leucocyte,
-            $spermatozoide, $mobilite, $parasite, $cristaux, $culture, $especes_bacteriennes, $titre, $compte_rendu
-        ]);
-        $erreur = "Enregistrement effectué avec succès !";
+        try {
+            // Insertion en base
+            $sql = "INSERT INTO ecs (
+                numero_identification, age, nom, prenom, medecin, couleur, nombre_leucocyte,
+                spermatozoide, mobilite, parasite, cristaux, culture, especes_bacteriennes, titre, compte_rendu
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $id, $age, $nom, $prenom, $medecin, $couleur, $nombre_leucocyte,
+                $spermatozoide, $mobilite, $parasite, $cristaux, $culture, $especes_bacteriennes, $titre, $compte_rendu
+            ]);
+            
+            // Redirection vers la page echantillon_male.php après insertion réussie
+            header("Location: echantillon_male.php");
+            exit();
+        } catch (Exception $e) {
+            $erreur = "Erreur lors de l'enregistrement : " . $e->getMessage();
+        }
     }
 }
 ?>
