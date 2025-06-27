@@ -3,22 +3,23 @@ require_once("identifier.php");
 require_once("connexion.php");
 
 $name = isset($_GET['name']) ? $_GET['name'] : "";
+
 $size = isset($_GET['size']) ? $_GET['size'] : 3;
 $page = isset($_GET['page']) ? $_GET['page'] : 1;
 $offset = ($page - 1) * $size;
-$reqliste = "SELECT * FROM patient where Nom_patient like '%$name%'";
-$reqcount = "SELECT COUNT(*) countP FROM patient";
-$resultatliste = $pdo->query($reqliste);
-$resultatcount = $pdo->query($reqcount);
-$tabcount = $resultatcount->fetch();
+$reqliste = "SELECT * FROM patient where Nom_patient like ?";
+$reqcount = "SELECT COUNT(*) countP FROM patient WHERE Nom_patient LIKE ?";
+$stmtCount = $pdo->prepare($reqcount);
+$stmtCount->execute(["%$name%"]);
+$tabcount = $stmtCount->fetch();
 $nbrliste = $tabcount['countP'];
 $reste = $nbrliste % $size;
 
-if ($reste === 0) {
-    $nbrPage = $nbrliste / $size;
-} else {
-    $nbrPage = floor($nbrliste / $size) + 1;
-}
+$nbrPage = ($nbrliste > 0) ? ceil($nbrliste / $size) : 1;
+
+$stmtListe = $pdo->prepare($reqliste);
+$stmtListe->execute(["%$name%"]);
+
 ?>
 
 <!DOCTYPE html>
@@ -524,210 +525,182 @@ if ($reste === 0) {
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1><i class="fas fa-users"></i> Liste des Patients</h1>
-            <p>Gestion et consultation des dossiers patients</p>
-        </div>
 
-        <div class="main-content">
-            <div class="search-section">
-                <div class="search-header">
-                    <h2 class="search-title">
-                        <i class="fas fa-search"></i>
-                        Rechercher un patient
-                    </h2>
-                    <div class="patient-count">
-                        <i class="fas fa-user-check"></i>
-                        <?php echo $nbrliste; ?> patients enregistrés
-                    </div>
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <?php
+           require_once("menu_gauche.php");
+       ?>
+
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+               <?php
+                require_once("menu_haut.php")
+               ?>
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    <!-- Page Heading -->
+                   
+                    <!-- Content Row -->
+                    <div class="row">
+
+                    <div class="container-fluid" id="container-wrapper">
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Liste des patients</h1>
+            <div>
+            <form method="get" action="Liste_patient.php" class="form-inline">
+              <div class="form-group">
+                <input type="text" name="name" placeholder="Saisissez votre nom"
+                class="form-control" value="<?php echo $name?>">
+              </div>
+              &nbsp &nbsp;
+            <button type="submit" class="btn btn-info"><i class="fa fa-search"></i>
+            chercher...
+            </button>
+            &nbsp &nbsp;
+            <a  class="text-success"href="patient.php"><i class="fa fa-plus  text-success" aria-hidden="true"></i>  Ajouter un patient</a>
+          </form>
+          </div>
+          </div>
+          <!-- Row -->
+          <div class="row">
+            <!-- Datatables -->
+            <div class="col-lg-12">
+              <div class="card mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-success"><?php echo $nbrliste?> patients enregristrés</h6>
                 </div>
-
-                <form method="get" action="Liste_patient.php" class="search-form">
-                    <input type="text" 
-                           name="name" 
-                           placeholder="Rechercher par nom..." 
-                           class="search-input" 
-                           value="<?php echo htmlspecialchars($name); ?>">
-                    
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search"></i>
-                        Chercher
-                    </button>
-                    
-                    <a href="patient.php" class="btn btn-success">
-                        <i class="fas fa-user-plus"></i>
-                        Ajouter un patient
-                    </a>
-                </form>
-            </div>
-
-            <div class="table-container">
-                <div class="table-header">
-                    <h3>
-                        <i class="fas fa-table"></i>
-                        Résultats de la recherche
-                        <?php if($name): ?>
-                            pour "<?php echo htmlspecialchars($name); ?>"
-                        <?php endif; ?>
-                    </h3>
-                </div>
-
-                <div class="table-responsive">
-                    <?php if($nbrliste > 0): ?>
-                        <table class="modern-table">
-                            <thead>
-                                <tr>
-                                    <th>N° URAP</th>
-                                    <th>Nom</th>
-                                    <th>Prénom</th>
-                                    <th>Âge</th>
-                                    <th>Sexe</th>
-                                    <th>Contact</th>
-                                    <th>Résidence</th>
-                                    <th>Précision</th>
-                                    <th>Profession</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while($patient = $resultatliste->fetch()): ?>
-                                    <tr>
-                                        <td>
-                                            <strong><?php echo htmlspecialchars($patient["Numero_urap"]); ?></strong>
-                                        </td>
-                                        <td><?php echo htmlspecialchars($patient["Nom_patient"]); ?></td>
-                                        <td><?php echo htmlspecialchars($patient["Prenom_patient"]); ?></td>
-                                        <td><?php echo htmlspecialchars($patient["Age"]); ?> ans</td>
-                                        <td>
-                                            <span class="stats-badge <?php echo strtolower($patient["Sexe_patient"]) === 'masculin' ? 'male' : 'female'; ?>">
-                                                <i class="fas fa-<?php echo strtolower($patient["Sexe_patient"]) === 'masculin' ? 'mars' : 'venus'; ?>"></i>
-                                                <?php echo htmlspecialchars($patient["Sexe_patient"]); ?>
-                                            </span>
-                                        </td>
-                                        <td><?php echo htmlspecialchars($patient["Contact_patient"]); ?></td>
-                                        <td><?php echo htmlspecialchars($patient["Lieu_résidence"]); ?></td>
-                                        <td><?php echo htmlspecialchars($patient["Precise"]); ?></td>
-                                        <td><?php echo htmlspecialchars($patient["Profession"]); ?></td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <a href="modifpatient.php?idU=<?php echo $patient["Numero_urap"]; ?>" 
-                                                   class="action-btn edit"
-                                                   title="Modifier"
-                                                   onclick="return confirm('Êtes-vous sûr de vouloir modifier ce patient ?')">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="supprimpatient.php?idU=<?php echo $patient["Numero_urap"]; ?>" 
-                                                   class="action-btn delete"
-                                                   title="Supprimer"
-                                                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce patient ? Cette action est irréversible.')">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            </tbody>
-                        </table>
-                    <?php else: ?>
-                        <div class="empty-state">
-                            <i class="fas fa-search"></i>
-                            <h3>Aucun patient trouvé</h3>
-                            <p>
-                                <?php if($name): ?>
-                                    Aucun patient ne correspond à votre recherche "<?php echo htmlspecialchars($name); ?>".
-                                <?php else: ?>
-                                    Aucun patient n'est enregistré dans la base de données.
-                                <?php endif; ?>
-                            </p>
-                            <a href="patient.php" class="btn btn-success" style="margin-top: 16px;">
-                                <i class="fas fa-user-plus"></i>
-                                Ajouter le premier patient
+                <div class="table-responsive p-3">
+                  <table class="table align-items-center table-flush" id="dataTable">
+                    <thead class="thead">
+                    <tr>
+                        <th>Numero urap</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Age</th>
+                        <th>Sexe</th>
+                        <th>Contact</th>
+                        <th>Lieu residence</th>
+                        <th>Precise</th>
+                        <th>Profession</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead >
+                    <thead>
+                        <?php while($patient=$resultatliste->fetch()){ ?>
+                        <td><?php echo $patient["Numero_urap"] ?></td>
+                        <td><?php echo $patient["Nom_patient"] ?></td>
+                        <td><?php echo $patient["Prenom_patient"] ?></td>
+                        <td><?php echo $patient["Age"] ?></td>
+                        <td><?php echo $patient["Sexe_patient"] ?></td>
+                        <td><?php echo $patient["Contact_patient"] ?></td>
+                        <td><?php echo $patient["Lieu_résidence"] ?></td>
+                        <td><?php echo $patient["Precise"] ?></td>
+                        <td><?php echo $patient["Profession"] ?></td>
+                        <td>
+                          <a onclick="return confirm('etes vous sur de vouloir modifier cet Utilisateur')" href="modifpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"><i class="fa fa-edit text-success" aria-hidden="true"></a></i>
+                           &nbsp;
+                          <a onclick="return confirm('etes vous sur de vouloir supprimer cet user')" href="supprimpatient.php?idU=<?php echo $patient["Numero_urap"] ?>"><i class="fa fa-trash text-danger" aria-hidden="true"></a></i>
+                          &nbsp;
+                          </a>
+                        </td>
+                      </tr>
+                      <?php } ?>
+						       </thead>
+                    <tfoot>
+                    <tr>
+                    <th>Numero urap</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Age</th>
+                        <th>Sexe</th>
+                        <th>Contact</th>
+                        <th>Lieu residence</th>
+                        <th>Precise</th>
+                        <th>Profession</th>
+                        <th>Actions</th>
+                    </tr>
+                    <tbody>
+                      
+                    </tbody>
+                  </table>
+                  <nav aria-label="Page navigation example">
+                        <ul class="pagination">
+                        <?php  for( $i=1;$i<=$nbrPage;$i++ ){?>
+                          <li class="page-item <?php if($i==$page)echo"page-item active"?>">
+                            <a class="page-link" href="Liste_patient.php?page=<?php echo $i; ?>&name=<?php echo $name; ?> ">
+                              <?php  echo $i;?>
                             </a>
-                        </div>
-                    <?php endif; ?>
+                          <?php } ?>
+                      </li>
+                        </ul>
+                 </nav>
                 </div>
+              </div>
+            </div>
+            
+  <!-- Scroll to top -->
+  <a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+  </a>
 
-                <?php if($nbrPage > 1): ?>
-                    <div class="pagination-container">
-                        <nav aria-label="Navigation des pages">
-                            <ul class="pagination">
-                                <?php for($i = 1; $i <= $nbrPage; $i++): ?>
-                                    <li class="page-item <?php if($i == $page) echo 'active'; ?>">
-                                        <a class="page-link" 
-                                           href="Liste_patient.php?page=<?php echo $i; ?>&name=<?php echo urlencode($name); ?>">
-                                            <?php echo $i; ?>
-                                        </a>
-                                    </li>
-                                <?php endfor; ?>
-                            </ul>
-                        </nav>
+                    <!-- Content Row -->
+                    <div class="row">
+
+                        <!-- Content Column -->
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; IPCI  2025</span>
                     </div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
+    <!-- End of Page Wrapper -->
 
-    <script>
-        // Support du mode sombre
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark');
-        }
-        
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-            if (event.matches) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        });
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
 
-        // Animation d'apparition des lignes du tableau
-        document.addEventListener('DOMContentLoaded', function() {
-            const rows = document.querySelectorAll('.modern-table tbody tr');
-            rows.forEach((row, index) => {
-                row.style.opacity = '0';
-                row.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    row.style.transition = 'all 0.3s ease';
-                    row.style.opacity = '1';
-                    row.style.transform = 'translateY(0)';
-                }, index * 50);
-            });
+    <!-- Logout Modal-->
+    
 
-            // Auto-focus sur le champ de recherche
-            const searchInput = document.querySelector('.search-input');
-            if (searchInput && !searchInput.value) {
-                searchInput.focus();
-            }
-        });
+    <!-- Bootstrap core JavaScript-->
+    <script src="../vendor/jquery/jquery.min.js"></script>
+    <script src="../vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-        // Amélioration de l'expérience utilisateur pour les confirmations
-        document.querySelectorAll('.action-btn.delete').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                const patientName = this.closest('tr').children[1].textContent + ' ' + 
-                                  this.closest('tr').children[2].textContent;
-                
-                if (!confirm(`Êtes-vous sûr de vouloir supprimer le patient ${patientName} ?\n\nCette action est irréversible.`)) {
-                    e.preventDefault();
-                }
-            });
-        });
+    <!-- Core plugin JavaScript-->
+    <script src="../vendor/jquery-easing/jquery.easing.min.js"></script>
 
-        // Indicateur de chargement pour la recherche
-        document.querySelector('.search-form').addEventListener('submit', function() {
-            const button = this.querySelector('button[type="submit"]');
-            const originalContent = button.innerHTML;
-            button.innerHTML = '<div class="loading-spinner"></div> Recherche...';
-            button.disabled = true;
-            
-            // Restaurer le bouton si la page ne se recharge pas (pour les erreurs)
-            setTimeout(() => {
-                button.innerHTML = originalContent;
-                button.disabled = false;
-            }, 5000);
-        });
-    </script>
+    <!-- Custom scripts for all pages-->
+    <script src="../js/sb-admin-2.min.js"></script>
+
+    <!-- Page level plugins -->
+    <script src="../vendor/chart.js/Chart.min.js"></script>
+
+    <!-- Page level custom scripts -->
+    <script src="../js/demo/chart-area-demo.js"></script>
+    <script src="../js/demo/chart-pie-demo.js"></script>
+
 </body>
 </html>
