@@ -23,7 +23,7 @@ require_once("identifier.php");
 <body class="bg-gradient-login">
   <!-- Register Content -->
   <div class="container-login mt-5"> <!-- Marge supérieure ajoutée -->
-    <div class="row justify-content-center">
+    <div class="row justify-content-center"> 
       <div class="col-xl-5 col-lg-12 col-md-9">
         <div class="card shadow-sm my-5">
           <div class="card-body p-0">

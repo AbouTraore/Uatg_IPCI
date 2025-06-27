@@ -2,6 +2,7 @@
 // Connexion à la base de données
 require_once("identifier.php");
 require_once("connexion.php");
+
 // Initialiser les variables pour stocker les données du formulaire
 $id = $age = $nom = $prenom = $medecin = $mobilite = $titre = $compte_rendu = '';
 $erreur = '';
@@ -30,17 +31,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         empty($mobilite) || empty($titre) || empty($compte_rendu)) {
         $erreur = "Veuillez remplir tous les champs obligatoires";
     } else {
-        // Insertion en base
-        $sql = "INSERT INTO ecs (
-            numero_identification, age, nom, prenom, medecin, couleur, nombre_leucocyte,
-            spermatozoide, mobilite, parasite, cristaux, culture, especes_bacteriennes, titre, compte_rendu
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            $id, $age, $nom, $prenom, $medecin, $couleur, $nombre_leucocyte,
-            $spermatozoide, $mobilite, $parasite, $cristaux, $culture, $especes_bacteriennes, $titre, $compte_rendu
-        ]);
-        $erreur = "Enregistrement effectué avec succès !";
+        try {
+            // Insertion en base
+            $sql = "INSERT INTO ecs (
+                numero_identification, age, nom, prenom, medecin, couleur, nombre_leucocyte,
+                spermatozoide, mobilite, parasite, cristaux, culture, especes_bacteriennes, titre, compte_rendu
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $id, $age, $nom, $prenom, $medecin, $couleur, $nombre_leucocyte,
+                $spermatozoide, $mobilite, $parasite, $cristaux, $culture, $especes_bacteriennes, $titre, $compte_rendu
+            ]);
+
+            // Redirection vers la page echantillon_male.php après insertion réussie
+            header("Location: echantillon_male.php");
+            exit();
+        } catch (Exception $e) {
+            $erreur = "Erreur lors de l'enregistrement : " . $e->getMessage();
+        }
     }
 }
 ?>
@@ -51,295 +59,448 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Examen Cytobactériologique du Sperme</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-bg: #ffffff; /* White background */
-            --header-bg: #0047ab; /* Dark blue */
-            --text-color: #0047ab; /* Dark blue text */
-            --input-bg: #ffffff; /* White input */
-            --input-text: #333333; /* Dark text */
-            --button-bg: #0047ab; /* Dark blue button */
-            --button-text: #ffffff; /* White text for buttons */
-            --button-hover: #1e90ff; /* Lighter blue on hover */
-            --border-radius: 8px;
-            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            --section-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            --error-color: #e74c3c; /* Red for error messages */
+            --primary: #0047ab;
+            --primary-light: #1e90ff;
+            --primary-dark: #003380;
+            --secondary: #f8fafc;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--primary-bg);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 20px;
+            color: var(--gray-800);
         }
 
         .container {
-            width: 100%;
-            max-width: 800px;
-            background-color: var(--primary-bg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding-bottom: 30px;
-            margin: 20px auto;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header {
-            background-color: var(--header-bg);
-            padding: 20px;
-            font-size: 1.5em;
-            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 32px;
             text-align: center;
-            color: var(--button-text);
-            letter-spacing: 1px;
-            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .section {
-            background-color: var(--primary-bg);
-            margin: 0 20px 20px;
-            padding: 20px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--section-shadow);
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
         }
 
-        .section-header {
-            font-size: 1.2em;
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content-area {
+            padding: 32px;
+            background: white;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border-radius: 12px;
             text-align: center;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+            background: var(--gray-50);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
             margin-bottom: 20px;
-            font-weight: bold;
-            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--gray-200);
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
         }
 
-        .form-group {
-            margin-bottom: 15px;
+        .form-field {
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .required::after {
+            content: " *";
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
         }
 
         .full-width {
             grid-column: 1 / -1;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.95em;
-            color: var(--text-color);
-        }
-
-        .required::after {
-            content: " *";
-            color: var(--error-color);
-        }
-
-        select,
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #0047ab; /* Dark blue border */
-            border-radius: 4px;
-            background-color: var(--input-bg);
-            color: var(--input-text);
-            font-size: 1em;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.3s ease;
-        }
-
-        select:focus,
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--button-hover); /* Lighter blue on focus */
-            box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.3);
+        .actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 32px;
         }
 
         .btn {
-            display: block;
-            width: 200px;
-            margin: 30px auto 0;
-            padding: 12px 20px;
-            background-color: var(--button-bg);
-            color: var(--button-text);
+            padding: 14px 28px;
             border: none;
-            border-radius: 6px;
-            font-size: 1em;
-            font-weight: bold;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            text-align: center;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
         }
 
-        .btn:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-        }
-
-        .error-message {
-            background-color: var(--error-color);
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
-            padding: 10px 15px;
-            margin: 0 20px 20px;
-            border-radius: var(--border-radius);
-            text-align: center;
-            font-weight: bold;
+            box-shadow: var(--shadow);
         }
 
-        /* Responsive adjustments */
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 2px solid var(--gray-200);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+            transform: translateY(-1px);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         @media (max-width: 768px) {
-            .container {
-                padding: 0 0 20px 0;
-                margin: 0;
-                border-radius: 0;
+            body {
+                padding: 10px;
             }
 
-            .section {
-                margin: 0 10px 15px;
-                padding: 15px;
+            .header {
+                padding: 24px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-area {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
             }
 
             .btn {
-                width: 80%;
+                width: 100%;
+            }
+
+            .form-section {
+                padding: 16px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">EXAMEN CYTOBACTÉRIOLOGIQUE DU SPERME</div>
+        <div class="header">
+            <h1><i class="fas fa-microscope"></i> Examen Cytobactériologique du Sperme</h1>
+            <p>Formulaire d'examen médical spécialisé</p>
+        </div>
 
-        <?php if (!empty($erreur)): ?>
-            <div class="error-message"><?php echo $erreur; ?></div>
-        <?php endif; ?>
+        <div class="content-area">
+            <?php if (!empty($erreur)): ?>
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <?php echo $erreur; ?>
+                </div>
+            <?php endif; ?>
 
-        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-            <div class="section">
-                <div class="section-header">Informations Patient</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="id" class="required">N° Identification</label>
-                        <input type="text" id="id" name="id" value="<?php echo $id; ?>" required />
+            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-user"></i>
+                        Informations Patient
                     </div>
-                    <div class="form-group">
-                        <label for="age" class="required">Âge</label>
-                        <input type="text" id="age" name="age" value="<?php echo $age; ?>" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="nom" class="required">Nom</label>
-                        <input type="text" id="nom" name="nom" value="<?php echo $nom; ?>" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="prenom" class="required">Prénom</label>
-                        <input type="text" id="prenom" name="prenom" value="<?php echo $prenom; ?>" required />
-                    </div>
-                    <div class="form-group full-width">
-                        <label for="medecin" class="required">Médecin prescripteur</label>
-                        <input type="text" id="medecin" name="medecin" value="<?php echo $medecin; ?>" required />
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="id" class="form-label required">N° Identification</label>
+                            <input type="text" id="id" name="id" class="form-input" value="<?php echo htmlspecialchars($id); ?>" required />
+                        </div>
+                        <div class="form-field">
+                            <label for="age" class="form-label required">Âge</label>
+                            <input type="text" id="age" name="age" class="form-input" value="<?php echo htmlspecialchars($age); ?>" required />
+                        </div>
+                        <div class="form-field">
+                            <label for="nom" class="form-label required">Nom</label>
+                            <input type="text" id="nom" name="nom" class="form-input" value="<?php echo htmlspecialchars($nom); ?>" required />
+                        </div>
+                        <div class="form-field">
+                            <label for="prenom" class="form-label required">Prénom</label>
+                            <input type="text" id="prenom" name="prenom" class="form-input" value="<?php echo htmlspecialchars($prenom); ?>" required />
+                        </div>
+                        <div class="form-field full-width">
+                            <label for="medecin" class="form-label required">Médecin prescripteur</label>
+                            <input type="text" id="medecin" name="medecin" class="form-input" value="<?php echo htmlspecialchars($medecin); ?>" required />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="section">
-                <div class="section-header">Examens Macroscopiques</div>
-                <div class="form-group">
-                    <label for="couleur">Couleur</label>
-                    <select id="couleur" name="couleur">
-                        <option value="blanchatre">Blanchâtre</option>
-                        <option value="grisatre">Grisâtre</option>
-                        <option value="jaunatre">Jaunâtre</option>
-                        <option value="autre">Autre</option>
-                    </select>
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-flask"></i>
+                        Examens
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="couleur" class="form-label">Couleur</label>
+                            <select id="couleur" name="couleur" class="form-select">
+                                <option value="blanchatre">Blanchâtre</option>
+                                <option value="grisatre">Grisâtre</option>
+                                <option value="jaunatre">Jaunâtre</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="nombre_leucocyte" class="form-label">Nombre de leucocytes</label>
+                            <select id="nombre_leucocyte" name="nombre_leucocyte" class="form-select">
+                                <option value="<5">&lt; 5</option>
+                                <option value=">5">&gt; 5</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="spermatozoide" class="form-label">Spermatozoïdes</label>
+                            <select id="spermatozoide" name="spermatozoide" class="form-select">
+                                <option value="moyen">Moyen</option>
+                                <option value="nombreux">Nombreux</option>
+                                <option value="tres nombreux">Très nombreux</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="mobilite" class="form-label required">Mobilité</label>
+                            <input type="text" id="mobilite" name="mobilite" class="form-input" value="<?php echo htmlspecialchars($mobilite); ?>" required />
+                        </div>
+                        <div class="form-field">
+                            <label for="parasite" class="form-label">Parasite</label>
+                            <select id="parasite" name="parasite" class="form-select">
+                                <option value="absence">Absence</option>
+                                <option value="presence">Présence</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="cristaux" class="form-label">Cristaux</label>
+                            <select id="cristaux" name="cristaux" class="form-select">
+                                <option value="absence">Absence</option>
+                                <option value="presence">Présence</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="culture" class="form-label">Culture</label>
+                            <select id="culture" name="culture" class="form-select">
+                                <option value="negative">Négative</option>
+                                <option value="positive">Positive</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="especes_bacteriennes" class="form-label">Espèces bactériennes isolées</label>
+                            <select id="especes_bacteriennes" name="especes_bacteriennes" class="form-select">
+                                <option value="absence">Absence</option>
+                                <option value="presence">Présence</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="titre" class="form-label required">Titre</label>
+                            <input type="text" id="titre" name="titre" class="form-input" value="<?php echo htmlspecialchars($titre); ?>" required />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="section">
-                <div class="section-header">Examens Microscopiques</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="nombre_leucocyte">Nombre de leucocytes</label>
-                        <select id="nombre_leucocyte" name="nombre_leucocyte">
-                            <option value="<5">&lt; 5</option>
-                            <option value=">5">&gt; 5</option>
-                        </select>
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        Compte Rendu
                     </div>
-                    <div class="form-group">
-                        <label for="spermatozoide">Spermatozoïdes</label>
-                        <select id="spermatozoide" name="spermatozoide">
-                            <option value="moyen">Moyen</option>
-                            <option value="nombreux">Nombreux</option>
-                            <option value="tres nombreux">Très nombreux</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="mobilite" class="required">Mobilité</label>
-                        <input type="text" id="mobilite" name="mobilite" value="<?php echo $mobilite; ?>" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="parasite">Parasite</label>
-                        <select id="parasite" name="parasite">
-                            <option value="absence">Absence</option>
-                            <option value="presence">Présence</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="cristaux">Cristaux</label>
-                        <select id="cristaux" name="cristaux">
-                            <option value="absence">Absence</option>
-                            <option value="presence">Présence</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="culture">Culture</label>
-                        <select id="culture" name="culture">
-                            <option value="negative">Négative</option>
-                            <option value="positive">Positive</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="especes_bacteriennes">Espèces bactériennes isolées</label>
-                        <select id="especes_bacteriennes" name="especes_bacteriennes">
-                            <option value="absence">Absence</option>
-                            <option value="presence">Présence</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="titre" class="required">Titre</label>
-                        <input type="text" id="titre" name="titre" value="<?php echo $titre; ?>" required />
+                    <div class="form-field full-width">
+                        <label for="compte_rendu" class="form-label required">Compte Rendu d'Analyse</label>
+                        <input type="text" id="compte_rendu" name="compte_rendu" class="form-input" value="<?php echo htmlspecialchars($compte_rendu); ?>" required />
                     </div>
                 </div>
-            </div>
-
-            <div class="section">
-                <div class="section-header">Analyse et Conclusion</div>
-                <div class="form-group">
-                    <label for="compte_rendu" class="required">Compte Rendu d'Analyse</label>
-                    <input type="text" id="compte_rendu" name="compte_rendu" value="<?php echo $compte_rendu; ?>" required />
+                
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                    <a href="echantillon_male.php" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Retour
+                    </a>
                 </div>
-            </div>
-
-            <button type="submit" class="btn">Soumettre</button>
-        </form>
+            </form>
+        </div>
     </div>
 </body>
 </html>

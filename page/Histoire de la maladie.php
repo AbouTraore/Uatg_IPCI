@@ -11,7 +11,7 @@
             padding: 20px;
         }
         h2 {
-            text-align: center;
+            text-align: center; page/Histoire de la maladie.php
         }
         .form-container {
             max-width: 600px;

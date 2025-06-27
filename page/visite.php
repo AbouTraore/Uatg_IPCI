@@ -1,25 +1,61 @@
 <?php
-// Initialiser les variables
+// On inclut les fichiers de configuration nécessaires
+// Assurez-vous que ces fichiers existent et sont correctement configurés
+require_once("identifier.php"); // Gère probablement l'authentification et les sessions
+require_once("connexion.php"); // Gère la connexion à la base de données (PDO)
+
+// Initialiser les variables du formulaire avec des valeurs par défaut
 $message = '';
-$date = '';
+$date_visite = '';
 $prescripteur = '';
 $structure = '';
 $heure = '';
 $motif = '';
+$message_type = ''; // 'success' ou 'danger'
 
-// Traiter le formulaire si soumis
+// Traiter le formulaire si soumis via la méthode POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Récupérer les données du formulaire
-    $date = $_POST['date'] ?? '';
-    $prescripteur = $_POST['prescripteur'] ?? '';
-    $structure = $_POST['structure'] ?? '';
-    $heure = $_POST['heure'] ?? '';
-    $motif = $_POST['motif'] ?? '';
-    
-    // Traitement des données (peut être ajouté selon les besoins)
-    
-    // Message de confirmation
-    $message = "Formulaire de visite soumis avec succès !";
+    // Récupérer et sécuriser les données du formulaire
+    $date_visite = htmlspecialchars($_POST['date'] ?? '');
+    $prescripteur = htmlspecialchars($_POST['prescripteur'] ?? '');
+    $structure = htmlspecialchars($_POST['structure'] ?? '');
+    $heure = htmlspecialchars($_POST['heure'] ?? '');
+    $motif = htmlspecialchars($_POST['motif'] ?? '');
+
+    // Validation simple des champs requis
+    if (empty($date_visite) || empty($prescripteur) || empty($structure) || empty($heure) || empty($motif)) {
+        $message = "Tous les champs du formulaire de visite sont obligatoires. Veuillez remplir le formulaire.";
+        $message_type = 'danger';
+    } else {
+        try {
+            // Préparer la requête d'insertion des données
+            // Les ? sont des "placeholders" pour les requêtes préparées
+            $sql = "INSERT INTO visite (date, prescripteur, structure, heure, motif) VALUES (?, ?, ?, ?, ?)";
+            
+            // Préparer le statement
+            $stmt = $pdo->prepare($sql);
+            
+            // Exécuter la requête avec les données du formulaire
+            // L'ordre des valeurs dans le tableau doit correspondre à l'ordre des ? dans la requête
+            $stmt->execute([$date_visite, $prescripteur, $structure, $heure, $motif]);
+            
+            // Message de succès après insertion
+            $message = "Le formulaire de visite a été enregistré avec succès !";
+            $message_type = 'success';
+            
+            // Réinitialiser les variables pour vider le formulaire après un succès
+            $date_visite = '';
+            $prescripteur = '';
+            $structure = '';
+            $heure = '';
+            $motif = '';
+
+        } catch (PDOException $e) {
+            // Gérer les erreurs de base de données
+            $message = "Une erreur est survenue lors de l'enregistrement : " . $e->getMessage();
+            $message_type = 'danger';
+        }
+    }
 }
 ?>
 
@@ -29,355 +65,435 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Formulaire Visite</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-bg: #ffffff;
-            --primary-color: #0047ab;
-            --secondary-color: #1e90ff;
-            --accent-color: #00008b;
-            --header-bg: linear-gradient(135deg, #0047ab 0%, #1e90ff 100%);
-            --text-color: #ffffff;
-            --text-dark: #333333;
-            --section-bg: #ffffff;
-            --section-border: #d0e1f9;
-            --input-bg: #ffffff;
-            --input-border: #d0e1f9;
-            --input-focus: #4169e1;
-            --input-text: #333333;
-            --button-primary: linear-gradient(135deg, #0047ab 0%, #1e90ff 100%);
-            --button-secondary: linear-gradient(135deg, #4169e1 0%, #6495ed 100%);
-            --button-danger: linear-gradient(135deg, #d63031 0%, #e84393 100%);
-            --button-text: #ffffff;
-            --button-hover-primary: linear-gradient(135deg, #003d91 0%, #0077e6 100%);
-            --button-hover-secondary: linear-gradient(135deg, #375ad9 0%, #5a89eb 100%);
-            --button-hover-danger: linear-gradient(135deg, #c12525 0%, #d63384 100%);
-            --success-bg: #2ecc71;
-            --error-bg: #e74c3c;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            --transition-speed: 0.3s;
+            --primary: #0047ab;
+            --primary-light: #1e90ff;
+            --primary-dark: #003380;
+            --secondary: #f8fafc;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-        }
-
-        html, body {
-            height: 100%;
-            overflow: hidden;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f9ff;
-            color: var(--text-dark);
-            margin: 0;
-            padding: 10px;
-            line-height: 1.5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--gray-800);
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
         }
 
         .container {
             width: 100%;
-            max-width: 1200px;
-            background-color: var(--section-bg);
-            box-shadow: var(--box-shadow);
-            border-radius: var(--border-radius);
+            max-width: 1000px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 20px);
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header {
-            font-size: 1.4em;
-            font-weight: bold;
-            padding: 12px 15px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 32px;
             text-align: center;
-            text-transform: uppercase;
-            background: var(--header-bg);
-            color: var(--text-color);
-            letter-spacing: 1px;
-            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
         }
 
-        .content-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px 20px;
-            display: flex;
-            flex-direction: column;
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
         }
 
-        .form-section {
-            background-color: var(--section-bg);
-            border-radius: var(--border-radius);
-            padding: 15px;
-            margin-bottom: 10px;
-            border: 1px solid var(--section-border);
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
-            gap: 15px;
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            position: relative;
+            z-index: 1;
         }
 
-        .form-field {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-width: 200px;
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
         }
 
-        label {
-            font-size: 0.9em;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--primary-color);
+        .content-area {
+            padding: 32px;
+            background: white;
         }
 
-        input[type="text"],
-        input[type="date"],
-        input[type="time"] {
-            background-color: var(--input-bg);
-            color: var(--input-text);
-            border: 1px solid var(--input-border);
-            padding: 8px 10px;
-            font-size: 0.95em;
-            border-radius: var(--border-radius);
-            transition: all var(--transition-speed);
-        }
-
-        input[type="text"]:focus,
-        input[type="date"]:focus,
-        input[type="time"]:focus {
-            outline: none;
-            border-color: var(--input-focus);
-            box-shadow: 0 0 0 2px rgba(82, 118, 193, 0.25);
-        }
-
-        .examens-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .examen-col {
-            flex: 1;
-            min-width: 270px;
-            background-color: var(--section-bg);
-            padding: 80px;
-            border-radius: var(--border-radius);
+        .alert {
+            background: linear-gradient(135deg, var(--accent) 0%, #34d399 100%);
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: var(--box-shadow);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            cursor: pointer;
-            text-decoration: none;
-            color: var(--primary-color);
-            border: 1px solid var(--section-border);
-            height: 60px;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease-in-out;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 10px;
         }
 
-        .examen-col:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            border-color: var(--secondary-color);
+        .alert-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            animation: shake 0.5s ease-in-out;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+            background: var(--gray-50);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .form-field {
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+        
+        .required::after {
+            content: " *";
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .examens-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .examen-card {
+            background-color: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--gray-800);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .examen-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-light);
+        }
+        
+        .examen-card i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            transition: color 0.3s ease;
+        }
+        
+        .examen-card:hover i {
+            color: var(--primary-light);
+        }
+        
         .examen-title {
-            font-weight: bold;
-            font-size: 0.85em;
-            letter-spacing: 0.3px;
+            font-weight: 600;
+            font-size: 1em;
+            letter-spacing: -0.02em;
         }
 
         .buttons-container {
             display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            padding: 0 0 5px 0;
-            margin-top: auto;
-            border-top: 1px solid var(--section-border);
-            padding-top: 10px;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 32px;
         }
 
         .btn-group {
             display: flex;
-            gap: 8px;
+            gap: 16px;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn {
-            font-weight: 500;
-            padding: 8px 14px;
+            padding: 14px 28px;
             border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            border-radius: var(--border-radius);
-            color: var(--button-text);
-            transition: all var(--transition-speed);
-            font-size: 0.9em;
+            transition: all 0.2s ease;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
+            gap: 8px;
+            min-width: 120px;
             justify-content: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-
-        .btn i {
-            font-size: 1em;
         }
 
         .btn-primary {
-            background: var(--button-primary);
-        }
-
-        .btn-secondary {
-            background: var(--button-secondary);
-        }
-
-        .btn-danger {
-            background: var(--button-danger);
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(44, 76, 140, 0.2);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            box-shadow: var(--shadow);
         }
 
         .btn-primary:hover {
-            background: var(--button-hover-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 2px solid var(--gray-200);
         }
 
         .btn-secondary:hover {
-            background: var(--button-hover-secondary);
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+            transform: translateY(-1px);
         }
-
-        .btn-danger:hover {
-            background: var(--button-hover-danger);
-        }
-
-        .alert {
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            border-radius: var(--border-radius);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .alert-success {
-            background-color: var(--success-bg);
+        
+        .btn-danger {
+            background: var(--danger);
             color: white;
+            box-shadow: var(--shadow);
         }
-
-        .alert i {
-            font-size: 1.2em;
-        }
-
-        .section-title {
-            color: var(--primary-color);
-            font-size: 1.1em;
-            margin-bottom: 10px;
-            font-weight: 600;
+        
+        .btn-danger:hover {
+            background: #d42d2d;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
 
         @media (max-width: 768px) {
-            .btn-group {
-                justify-content: center;
-                margin-bottom: 5px;
+            body {
+                padding: 10px;
             }
-            
+
+            .header {
+                padding: 24px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .content-area {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
             .buttons-container {
-                flex-direction: column;
-                gap: 8px;
+                gap: 16px;
             }
             
-            .container {
-                height: 100%;
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .form-section {
+                padding: 16px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">FORMULAIRE VISITE</div>
+        <div class="header">
+            <h1><i class="fas fa-calendar-check"></i> Formulaire de Visite</h1>
+            <p>Enregistrez les informations d'une nouvelle visite de patient</p>
+        </div>
         
-        <div class="content-container">
+        <div class="content-area">
             <?php if (!empty($message)): ?>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
+                <div class="alert alert-<?php echo $message_type; ?>">
+                    <i class="fas fa-<?php echo ($message_type == 'success' ? 'check-circle' : 'exclamation-triangle'); ?>"></i>
                     <?php echo $message; ?>
                 </div>
             <?php endif; ?>
 
-            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" style="display: flex; flex-direction: column; flex: 1;">
+            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                 <div class="form-section">
-                    <div class="section-title">Informations de la visite</div>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="date">Date</label>
-                            <input type="date" id="date" name="date" value="<?php echo $date; ?>" required />
-                        </div>
-                        <div class="form-field">
-                            <label for="heure">Heure</label>
-                            <input type="time" id="heure" name="heure" value="<?php echo $heure; ?>" required />
-                        </div>
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informations de la Visite
                     </div>
-
-                    <div class="form-row">
+                    <div class="form-grid">
                         <div class="form-field">
-                            <label for="prescripteur">Prescripteur</label>
-                            <input type="text" id="prescripteur" name="prescripteur" value="<?php echo $prescripteur; ?>" required />
+                            <label for="date" class="form-label required">Date</label>
+                            <input type="date" id="date" name="date" class="form-input" value="<?php echo htmlspecialchars($date_visite); ?>" required />
                         </div>
                         <div class="form-field">
-                            <label for="structure">Structure de provenance</label>
-                            <input type="text" id="structure" name="structure" value="<?php echo $structure; ?>" required />
+                            <label for="heure" class="form-label required">Heure</label>
+                            <input type="time" id="heure" name="heure" class="form-input" value="<?php echo htmlspecialchars($heure); ?>" required />
                         </div>
-                    </div>
-                    
-                    <div class="form-row">
                         <div class="form-field">
-                            <label for="motif">Motif de la visite</label>
-                            <input type="text" id="motif" name="motif" value="<?php echo $motif; ?>" required />
+                            <label for="prescripteur" class="form-label required">Prescripteur</label>
+                            <input type="text" id="prescripteur" name="prescripteur" class="form-input" value="<?php echo htmlspecialchars($prescripteur); ?>" placeholder="Nom du prescripteur" required />
+                        </div>
+                        <div class="form-field">
+                            <label for="structure" class="form-label required">Structure de provenance</label>
+                            <input type="text" id="structure" name="structure" class="form-input" value="<?php echo htmlspecialchars($structure); ?>" placeholder="Nom de la structure" required />
+                        </div>
+                        <div class="form-field full-width">
+                            <label for="motif" class="form-label required">Motif de la visite</label>
+                            <input type="text" id="motif" name="motif" class="form-input" value="<?php echo htmlspecialchars($motif); ?>" placeholder="Ex: Consultation, contrôle, etc." required />
                         </div>
                     </div>
                 </div>
 
-                <div class="section-title">Types d'examens disponibles</div>
-                <div class="examens-section">
-                    <a href="ecs.php" class="examen-col">
-                        <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE DU SPERME</div>
-                    </a>
-                    <a href="EXA_CYTO_SEC_VAG.php" class="examen-col">
-                        <div class="examen-title">
-                            EXAMEN CYTOBACTERIOLOGIQUE SECRETION VAGINALE
-                        </div>
-                    </a>
-                    <a href="ecsu.php" class="examen-col">
-                        <div class="examen-title">
-                            EXAMEN CYTOBACTERIOLOGIQUE SECRETION URETARLE
-                        </div>
-                    </a>
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-vial"></i>
+                        Types d'Examens
+                    </div>
+                    <div class="examens-section">
+                        <a href="ecs.php" class="examen-card">
+                            <i class="fas fa-microscope"></i>
+                            <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE DU SPERME</div>
+                        </a>
+                        <a href="EXA_CYTO_SEC_VAG.php" class="examen-card">
+                            <i class="fas fa-bacteria"></i>
+                            <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE SECRETION VAGINALE</div>
+                        </a>
+                        <a href="ecsu.php" class="examen-card">
+                            <i class="fas fa-syringe"></i>
+                            <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE SECRETION URETRALE</div>
+                        </a>
+                    </div>
                 </div>
-
+                
                 <div class="buttons-container">
                     <div class="btn-group">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Enregistrer
                         </button>
-                        <a href="echantillons.php" class="btn btn-secondary" style="text-decoration: none;">
+                        <a href="echantillons.php" class="btn btn-secondary">
                             <i class="fas fa-flask"></i> Échantillons
                         </a>
                     </div>
@@ -388,36 +504,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <button type="button" class="btn btn-secondary">
                             <i class="fas fa-print"></i> Imprimer
                         </button>
-                        <button type="button" class="btn btn-danger" onclick="window.history.back()">
+                        <a href="javascript:history.back()" class="btn btn-danger">
                             <i class="fas fa-arrow-left"></i> Retour
-                        </button>
+                        </a>
                     </div>
                 </div>
             </form>
         </div>
     </div>
-    
-    <script>
-        // Ajuster la hauteur du container au chargement et au redimensionnement
-        function adjustHeight() {
-            const container = document.querySelector('.container');
-            container.style.height = window.innerHeight - 20 + 'px';
-        }
-        
-        window.addEventListener('load', adjustHeight);
-        window.addEventListener('resize', adjustHeight);
-        
-        // Dark mode detection
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark');
-        }
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-            if (event.matches) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        });
-    </script>
 </body>
 </html>
