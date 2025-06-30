@@ -1,89 +1,33 @@
 <?php
 // nouveau_dossier.php
+require_once("connexion.php");
 
-// Données simulées des patients (à remplacer par une requête à votre base de données)
-$patients = [
-    [
-        'N_Urap' => '001',
-        'Nom' => 'KOUAME',
-        'Prenom' => 'Jean',
-        'datenaiss' => '1985-05-15',
-        'Age' => '38',
-        'SexeP' => 'Masculin',
-        'contact' => '0101020304',
-        'Adresse' => 'Cocody Riviera',
-        'SituaM' => 'Marié',
-        'reside' => 'Abidjan',
-        'Precise' => '',
-        'Type_log' => 'Villa',
-        'NiveauE' => 'Universitaire',
-        'Profession' => 'Cadre superieur'
-    ],
-    [
-        'N_Urap' => '002',
-        'Nom' => 'TRAORE',
-        'Prenom' => 'Aminata',
-        'datenaiss' => '1992-08-22',
-        'Age' => '31',
-        'SexeP' => 'Féminin',
-        'contact' => '0707080910',
-        'Adresse' => 'Yopougon Selmer',
-        'SituaM' => 'Célibataire',
-        'reside' => 'Abidjan',
-        'Precise' => '',
-        'Type_log' => 'Studio',
-        'NiveauE' => 'Secondaire',
-        'Profession' => 'Secteur informel'
-    ],
-    [
-        'N_Urap' => '003',
-        'Nom' => 'DIABATE',
-        'Prenom' => 'Mohamed',
-        'datenaiss' => '1978-12-03',
-        'Age' => '45',
-        'SexeP' => 'Masculin',
-        'contact' => '0505060708',
-        'Adresse' => 'Bouaké Centre',
-        'SituaM' => 'Marié',
-        'reside' => 'Hors Abidjan',
-        'Precise' => 'Bouaké',
-        'Type_log' => 'Cour commune',
-        'NiveauE' => 'Primaire',
-        'Profession' => 'Secteur informel'
-    ],
-    [
-        'N_Urap' => '004',
-        'Nom' => 'KONE',
-        'Prenom' => 'Mariam',
-        'datenaiss' => '1995-03-10',
-        'Age' => '28',
-        'SexeP' => 'Féminin',
-        'contact' => '0909080706',
-        'Adresse' => 'Adjamé Liberté',
-        'SituaM' => 'Célibataire',
-        'reside' => 'Abidjan',
-        'Precise' => '',
-        'Type_log' => 'Cour commune',
-        'NiveauE' => 'Universitaire',
-        'Profession' => 'Etudiant'
-    ],
-    [
-        'N_Urap' => '005',
-        'Nom' => 'OUATTARA',
-        'Prenom' => 'Ibrahim',
-        'datenaiss' => '1960-07-18',
-        'Age' => '63',
-        'SexeP' => 'Masculin',
-        'contact' => '0202030405',
-        'Adresse' => 'Plateau Centre',
-        'SituaM' => 'Marié',
-        'reside' => 'Abidjan',
-        'Precise' => '',
-        'Type_log' => 'Villa',
-        'NiveauE' => 'Universitaire',
-        'Profession' => 'Retraité'
-    ]
-];
+// Récupération des patients depuis la base de données
+$patients = [];
+try {
+    $stmt = $pdo->query("SELECT * FROM patient");
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $patients[] = [
+            'N_Urap' => $row['Numero_urap'],
+            'Nom' => $row['Nom_patient'],
+            'Prenom' => $row['Prenom_patient'],
+            'datenaiss' => $row['Date_naissance'],
+            'Age' => $row['Age'],
+            'SexeP' => $row['Sexe_patient'],
+            'contact' => $row['Contact_patient'],
+            'Adresse' => isset($row['Adresse']) ? $row['Adresse'] : '',
+            'SituaM' => $row['Situation_matrimoniale'],
+            'reside' => $row['Lieu_résidence'],
+            'Precise' => $row['Precise'],
+            'Type_log' => $row['Type_logement'],
+            'NiveauE' => $row['Niveau_etude'],
+            'Profession' => $row['Profession']
+        ];
+    }
+} catch (Exception $e) {
+    // Gestion d'erreur simple
+    $patients = [];
+}
 ?>
 
 <!DOCTYPE html>
@@ -483,6 +427,14 @@ $patients = [
             box-shadow: var(--shadow-lg);
         }
 
+        .btn-accent:disabled {
+            background: var(--gray-300) !important;
+            color: var(--gray-500) !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
         .floating-label {
             position: relative;
         }
@@ -749,10 +701,10 @@ $patients = [
                         <i class="fas fa-history"></i>
                         Suivie
                     </button>
-                    <a href="visite.php" class="btn btn-accent">
+                    <button type="button" class="btn btn-accent" id="btnNouvelleVisite" disabled>
                         <i class="fas fa-stethoscope"></i>
                         Nouvelle visite
-                    </a>
+                    </button>
                     <button type="button" class="btn btn-primary" onclick="window.location.href='visite.php'">
                         <i class="fas fa-save"></i>
                         Enregistrer
@@ -794,33 +746,42 @@ $patients = [
             patientCards.forEach(card => {
                 card.classList.remove('selected');
             });
-
             patientCards[index].classList.add('selected');
+            // Activer le bouton Nouvelle visite
+            document.getElementById('btnNouvelleVisite').disabled = false;
+            // Stocker l'index du patient sélectionné si besoin
+            document.getElementById('btnNouvelleVisite').dataset.patientIndex = index;
+        }
 
-            // Remplir le formulaire avec animation
-            const patient = patients[index];
-            
-            Object.keys(patient).forEach(key => {
-                const field = document.getElementById(key);
-                if (field) {
-                    field.style.transform = 'scale(1.02)';
-                    setTimeout(() => {
-                        field.value = patient[key];
-                        field.style.transform = 'scale(1)';
-                    }, 100);
+        // Désélectionner le patient si on clique ailleurs
+        document.addEventListener('click', function(event) {
+            // Si le clic n'est pas sur une carte patient ni sur un enfant de celle-ci
+            let isPatientCard = false;
+            patientCards.forEach(card => {
+                if (card.contains(event.target)) {
+                    isPatientCard = true;
                 }
             });
-
-            // Mettre à jour le champ Precise
-            setTimeout(togglePreciseField, 200);
-
-            // Scroll vers le formulaire sur mobile
-            if (window.innerWidth <= 1024) {
-                document.querySelector('.content-area').scrollIntoView({ 
-                    behavior: 'smooth' 
+            if (!isPatientCard) {
+                patientCards.forEach(card => {
+                    card.classList.remove('selected');
                 });
+                // Désactiver le bouton Nouvelle visite
+                document.getElementById('btnNouvelleVisite').disabled = true;
+                document.getElementById('btnNouvelleVisite').removeAttribute('data-patient-index');
             }
-        }
+        });
+
+        // Rediriger vers visite.php avec l'ID du patient sélectionné
+        document.getElementById('btnNouvelleVisite').addEventListener('click', function() {
+            if (this.disabled) return;
+            const index = this.dataset.patientIndex;
+            if (typeof index !== 'undefined') {
+                const patient = patients[index];
+                // Rediriger avec l'identifiant du patient (N_Urap)
+                window.location.href = 'visite.php?idU=' + encodeURIComponent(patient.N_Urap);
+            }
+        });
 
         // Fonction pour vider le formulaire
         function clearForm() {
