@@ -1,33 +1,89 @@
 <?php
 // nouveau_dossier.php
-require_once("connexion.php");
 
-// Récupération des patients depuis la base de données
-$patients = [];
-try {
-    $stmt = $pdo->query("SELECT * FROM patient");
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $patients[] = [
-            'N_Urap' => $row['Numero_urap'],
-            'Nom' => $row['Nom_patient'],
-            'Prenom' => $row['Prenom_patient'],
-            'datenaiss' => $row['Date_naissance'],
-            'Age' => $row['Age'],
-            'SexeP' => $row['Sexe_patient'],
-            'contact' => $row['Contact_patient'],
-            'Adresse' => isset($row['Adresse']) ? $row['Adresse'] : '',
-            'SituaM' => $row['Situation_matrimoniale'],
-            'reside' => $row['Lieu_résidence'],
-            'Precise' => $row['Precise'],
-            'Type_log' => $row['Type_logement'],
-            'NiveauE' => $row['Niveau_etude'],
-            'Profession' => $row['Profession']
-        ];
-    }
-} catch (Exception $e) {
-    // Gestion d'erreur simple
-    $patients = [];
-}
+// Données simulées des patients (à remplacer par une requête à votre base de données)
+$patients = [
+    [
+        'N_Urap' => '001',
+        'Nom' => 'KOUAME',
+        'Prenom' => 'Jean',
+        'datenaiss' => '1985-05-15',
+        'Age' => '38',
+        'SexeP' => 'Masculin',
+        'contact' => '0101020304',
+        'Adresse' => 'Cocody Riviera',
+        'SituaM' => 'Marié',
+        'reside' => 'Abidjan',
+        'Precise' => '',
+        'Type_log' => 'Villa',
+        'NiveauE' => 'Universitaire',
+        'Profession' => 'Cadre superieur'
+    ],
+    [
+        'N_Urap' => '002',
+        'Nom' => 'TRAORE',
+        'Prenom' => 'Aminata',
+        'datenaiss' => '1992-08-22',
+        'Age' => '31',
+        'SexeP' => 'Féminin',
+        'contact' => '0707080910',
+        'Adresse' => 'Yopougon Selmer',
+        'SituaM' => 'Célibataire',
+        'reside' => 'Abidjan',
+        'Precise' => '',
+        'Type_log' => 'Studio',
+        'NiveauE' => 'Secondaire',
+        'Profession' => 'Secteur informel'
+    ],
+    [
+        'N_Urap' => '003',
+        'Nom' => 'DIABATE',
+        'Prenom' => 'Mohamed',
+        'datenaiss' => '1978-12-03',
+        'Age' => '45',
+        'SexeP' => 'Masculin',
+        'contact' => '0505060708',
+        'Adresse' => 'Bouaké Centre',
+        'SituaM' => 'Marié',
+        'reside' => 'Hors Abidjan',
+        'Precise' => 'Bouaké',
+        'Type_log' => 'Cour commune',
+        'NiveauE' => 'Primaire',
+        'Profession' => 'Secteur informel'
+    ],
+    [
+        'N_Urap' => '004',
+        'Nom' => 'KONE',
+        'Prenom' => 'Mariam',
+        'datenaiss' => '1995-03-10',
+        'Age' => '28',
+        'SexeP' => 'Féminin',
+        'contact' => '0909080706',
+        'Adresse' => 'Adjamé Liberté',
+        'SituaM' => 'Célibataire',
+        'reside' => 'Abidjan',
+        'Precise' => '',
+        'Type_log' => 'Cour commune',
+        'NiveauE' => 'Universitaire',
+        'Profession' => 'Etudiant'
+    ],
+    [
+        'N_Urap' => '005',
+        'Nom' => 'OUATTARA',
+        'Prenom' => 'Ibrahim',
+        'datenaiss' => '1960-07-18',
+        'Age' => '63',
+        'SexeP' => 'Masculin',
+        'contact' => '0202030405',
+        'Adresse' => 'Plateau Centre',
+        'SituaM' => 'Marié',
+        'reside' => 'Abidjan',
+        'Precise' => '',
+        'Type_log' => 'Villa',
+        'NiveauE' => 'Universitaire',
+        'Profession' => 'Retraité'
+    ]
+];
 ?>
 
 <!DOCTYPE html>
@@ -510,14 +566,76 @@ try {
                 width: 100%;
             }
         }
+
+        .btn-patient-detail {
+            display: none;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #e0edff;
+            color: #2563eb;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            transition: background 0.2s, color 0.2s;
+            z-index: 2;
+        }
+
+        .patient-card:hover .btn-patient-detail {
+            display: block;
+        }
+
+        .btn-patient-detail:hover {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .btn-patient-edit {
+            display: none;
+            position: absolute;
+            top: 12px;
+            right: 54px;
+            background: #f3f4f6;
+            color: #0047ab;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            transition: background 0.2s, color 0.2s;
+            z-index: 2;
+            text-align: center;
+            line-height: 36px;
+            text-decoration: none;
+        }
+
+        .patient-card:hover .btn-patient-edit {
+            display: inline-block;
+        }
+
+        .btn-patient-edit:hover {
+            background: #0047ab;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
+    <div id="formErrorMessage" style="display:none; justify-content: center; align-items: center; margin: 32px auto 24px auto; max-width: 600px; padding: 16px 24px; border-radius: 12px; background: #ffeaea; color: #b91c1c; font-weight: 600; border: 1.5px solid #fca5a5; box-shadow: 0 2px 8px rgba(239,68,68,0.07); font-size: 1.05rem; text-align: center; gap: 12px; transition: opacity 0.3s; opacity: 0;"><i class="fas fa-exclamation-triangle" style="margin-right: 10px; color: #ef4444;"></i><span id="formErrorText"></span></div>
     <div class="container">
         <div class="header">
+            <button onclick="window.history.back()" style="position:absolute;left:24px;top:32px;background:var(--gray-100);border:none;border-radius:50px;padding:10px 18px;font-size:1.1em;box-shadow:0 2px 8px rgba(0,0,0,0.07);color:var(--primary);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.2s;z-index:2;">
+                <i class="fas fa-arrow-left"></i> Retour
+            </button>
             <h1><i class="fas fa-user-plus"></i> Nouveau Dossier Patient</h1>
             <p>Créer ou modifier un dossier patient existant</p>
         </div>
+        <div id="saveMessage"></div>
 
         <div class="main-content">
             <div class="sidebar">
@@ -544,6 +662,8 @@ try {
                                     <?php echo htmlspecialchars($patient['Age']); ?> ans
                                 </span>
                             </div>
+                            <button type="button" class="btn-patient-detail" title="Voir le détail" onclick="event.stopPropagation();showPatientDetail(<?php echo $index; ?>)"><i class="fas fa-eye"></i></button>
+                            <a href="modifpatient.php?idU=<?php echo urlencode($patient['N_Urap']); ?>" class="btn-patient-edit" title="Modifier" onclick="event.stopPropagation();"><i class="fas fa-pen"></i></a>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -701,10 +821,10 @@ try {
                         <i class="fas fa-history"></i>
                         Suivie
                     </button>
-                    <button type="button" class="btn btn-accent" id="btnNouvelleVisite" disabled>
+                    <a href="visite.php" class="btn btn-accent">
                         <i class="fas fa-stethoscope"></i>
                         Nouvelle visite
-                    </button>
+                    </a>
                     <button type="button" class="btn btn-primary" onclick="window.location.href='visite.php'">
                         <i class="fas fa-save"></i>
                         Enregistrer
@@ -713,6 +833,16 @@ try {
             </div>
         </div>
     </div>
+
+    <!-- Modale détail patient -->
+    <div id="detailModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(31,41,55,0.35); z-index:10000; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:18px; max-width:480px; width:90vw; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.18); padding:32px 24px 24px 24px; position:relative; animation:fadeIn .3s;">
+            <button id="closeDetailModal" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:1.5em; color:#b91c1c; cursor:pointer;"><i class="fas fa-times"></i></button>
+            <h2 style="font-size:1.3em; color:#0047ab; margin-bottom:18px; text-align:center;"><i class="fas fa-user"></i> Détail du patient</h2>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+    <style>@keyframes fadeIn{from{opacity:0;transform:scale(0.98);}to{opacity:1;transform:scale(1);}}</style>
 
     <script>
         // Données des patients depuis PHP
@@ -740,50 +870,42 @@ try {
             patientsCount.textContent = visibleCount;
         });
 
-        // Fonction pour sélectionner un patient
+        // Ajout gestion bouton Modifier
+        const btnModifier = document.getElementById('btnModifier');
+        let selectedPatientIndex = null;
+
         function selectPatient(index) {
             // Animation de sélection
             patientCards.forEach(card => {
                 card.classList.remove('selected');
             });
             patientCards[index].classList.add('selected');
-            // Activer le bouton Nouvelle visite
-            document.getElementById('btnNouvelleVisite').disabled = false;
-            // Stocker l'index du patient sélectionné si besoin
-            document.getElementById('btnNouvelleVisite').dataset.patientIndex = index;
-        }
 
-        // Désélectionner le patient si on clique ailleurs
-        document.addEventListener('click', function(event) {
-            // Si le clic n'est pas sur une carte patient ni sur un enfant de celle-ci
-            let isPatientCard = false;
-            patientCards.forEach(card => {
-                if (card.contains(event.target)) {
-                    isPatientCard = true;
+            // Remplir le formulaire avec animation
+            const patient = patients[index];
+            
+            Object.keys(patient).forEach(key => {
+                const field = document.getElementById(key);
+                if (field) {
+                    field.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        field.value = patient[key];
+                        field.style.transform = 'scale(1)';
+                    }, 100);
                 }
             });
-            if (!isPatientCard) {
-                patientCards.forEach(card => {
-                    card.classList.remove('selected');
+
+            // Mettre à jour le champ Precise
+            setTimeout(togglePreciseField, 200);
+
+            // Scroll vers le formulaire sur mobile
+            if (window.innerWidth <= 1024) {
+                document.querySelector('.content-area').scrollIntoView({ 
+                    behavior: 'smooth' 
                 });
-                // Désactiver le bouton Nouvelle visite
-                document.getElementById('btnNouvelleVisite').disabled = true;
-                document.getElementById('btnNouvelleVisite').removeAttribute('data-patient-index');
             }
-        });
+        }
 
-        // Rediriger vers visite.php avec l'ID du patient sélectionné
-        document.getElementById('btnNouvelleVisite').addEventListener('click', function() {
-            if (this.disabled) return;
-            const index = this.dataset.patientIndex;
-            if (typeof index !== 'undefined') {
-                const patient = patients[index];
-                // Rediriger avec l'identifiant du patient (N_Urap)
-                window.location.href = 'visite.php?idU=' + encodeURIComponent(patient.N_Urap);
-            }
-        });
-
-        // Fonction pour vider le formulaire
         function clearForm() {
             document.getElementById('patientForm').reset();
             document.querySelector('.notes-textarea').value = '';
@@ -806,6 +928,11 @@ try {
                     input.style.borderColor = '';
                 }, 300);
             });
+
+            selectedPatientIndex = null;
+            btnModifier.disabled = true;
+            updateVisiteButtonState();
+            updateDetailButtonState();
         }
 
         // Fonction pour gérer le champ "Precise"
@@ -902,6 +1029,168 @@ try {
                 localStorage.removeItem('dossier_temp_' + input.name);
             });
         });
+
+        // Remplacer l'action du bouton Enregistrer par un enregistrement AJAX
+        const btnEnregistrer = document.getElementById('btnEnregistrer');
+        const patientForm = document.getElementById('patientForm');
+        const patientsList = document.getElementById('patientsList');
+        const notesTextarea = document.querySelector('.notes-textarea');
+
+        function showMessage(message, type = 'success') {
+            let msgDiv = document.getElementById('saveMessage');
+            if (!msgDiv) {
+                msgDiv = document.createElement('div');
+                msgDiv.id = 'saveMessage';
+                document.body.appendChild(msgDiv);
+            }
+            // Style général
+            msgDiv.style.position = 'fixed';
+            msgDiv.style.top = '60px';
+            msgDiv.style.left = '50%';
+            msgDiv.style.transform = 'translateX(-50%)';
+            msgDiv.style.zIndex = '9999';
+            msgDiv.style.minWidth = '340px';
+            msgDiv.style.maxWidth = '700px';
+            msgDiv.style.display = 'flex';
+            msgDiv.style.alignItems = 'center';
+            msgDiv.style.justifyContent = 'center';
+            msgDiv.style.gap = '16px';
+            msgDiv.style.padding = '20px 40px';
+            msgDiv.style.borderRadius = '16px';
+            msgDiv.style.fontWeight = 'bold';
+            msgDiv.style.fontSize = '1.18rem';
+            msgDiv.style.boxShadow = '0 6px 24px rgba(0,0,0,0.10)';
+            msgDiv.style.opacity = '0';
+            msgDiv.style.transition = 'opacity 0.3s';
+            // Ajout d'une icône et d'un titre selon le type
+            let icon = '';
+            let title = '';
+            if(type === 'success') {
+                icon = '<i class="fas fa-info-circle" style="color:#2563eb;font-size:1.5em;"></i>';
+                title = '<span style="color:#2563eb;font-size:1.1em;margin-right:8px;">Succès !</span>';
+                msgDiv.style.background = '#e0edff';
+                msgDiv.style.color = '#1e3a8a';
+                msgDiv.style.border = '2px solid #60a5fa';
+            } else {
+                icon = '<i class="fas fa-exclamation-circle" style="color:#ea580c;font-size:1.5em;"></i>';
+                title = '<span style="color:#ea580c;font-size:1.1em;margin-right:8px;">Attention !</span>';
+                msgDiv.style.background = '#fff7ed';
+                msgDiv.style.color = '#9a3412';
+                msgDiv.style.border = '2px solid #fdba74';
+            }
+            msgDiv.innerHTML = icon + title + '<span>' + message + '</span>';
+            msgDiv.style.display = 'flex';
+            setTimeout(() => { msgDiv.style.opacity = '1'; }, 10);
+            // Scroll automatique vers la notification
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => {
+                msgDiv.style.opacity = '0';
+                setTimeout(() => { msgDiv.style.display = 'none'; }, 300);
+            }, 5000);
+        }
+
+        btnEnregistrer.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Validation JS des champs obligatoires
+            const N_Urap = document.getElementById('N_Urap').value.trim();
+            const Nom = document.getElementById('Nom').value.trim();
+            const Prenom = document.getElementById('Prenom').value.trim();
+            if (!N_Urap || !Nom || !Prenom) {
+                showMessage('Champs obligatoires manquants', 'error');
+                return;
+            }
+            const formData = new FormData(patientForm);
+            formData.append('notes', notesTextarea.value);
+            fetch('traitement_dossier.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.patient) {
+                    // Ajouter le patient à la liste de gauche
+                    patients.push(data.patient);
+                    const index = patients.length - 1;
+                    const card = document.createElement('div');
+                    card.className = 'patient-card';
+                    card.setAttribute('onclick', `selectPatient(${index})`);
+                    card.setAttribute('data-name', (data.patient.Nom + ' ' + data.patient.Prenom).toLowerCase());
+                    card.innerHTML = `
+                        <div class="patient-name">${data.patient.Nom} ${data.patient.Prenom}</div>
+                        <div class="patient-details">
+                            <span>N° ${data.patient.N_Urap}</span>
+                            <span class="patient-age"><i class="fas fa-calendar-alt"></i> ${data.patient.Age} ans</span>
+                        </div>
+                    `;
+                    patientsList.appendChild(card);
+                    document.getElementById('patientsCount').textContent = patients.length;
+                    showMessage('Patient enregistré avec succès !', 'success');
+                    clearForm();
+                } else {
+                    showMessage(data.error || 'Erreur lors de l\'enregistrement', 'error');
+                }
+            })
+            .catch(() => {
+                showMessage('Erreur lors de l\'enregistrement', 'error');
+            });
+        });
+
+        const btnNouvelleVisite = document.getElementById('btnNouvelleVisite');
+
+        function updateVisiteButtonState() {
+            if (selectedPatientIndex !== null) {
+                btnNouvelleVisite.style.pointerEvents = 'auto';
+                btnNouvelleVisite.style.opacity = '1';
+                // Met à jour le lien avec l'id du patient sélectionné si besoin
+                const numeroUrap = patients[selectedPatientIndex]['N_Urap'];
+                btnNouvelleVisite.href = 'visite.php?idU=' + encodeURIComponent(numeroUrap);
+            } else {
+                btnNouvelleVisite.style.pointerEvents = 'none';
+                btnNouvelleVisite.style.opacity = '0.6';
+                btnNouvelleVisite.href = '#';
+            }
+        }
+
+        // Message si on clique sans sélection (sécurité supplémentaire)
+        btnNouvelleVisite.addEventListener('click', function(e) {
+            if (selectedPatientIndex === null) {
+                e.preventDefault();
+                showMessage('Veuillez d\'abord sélectionner un patient enregistré.', 'error');
+            }
+        });
+
+        // Initialiser l'état du bouton à l'ouverture
+        updateVisiteButtonState();
+
+        function showPatientDetail(index) {
+            const p = patients[index];
+            let html = '<table style="width:100%;border-collapse:collapse;font-size:1em;">';
+            for (const [key, value] of Object.entries(p)) {
+                html += `<tr><td style='font-weight:600;padding:6px 8px;color:#374151;text-align:left;'>${key}</td><td style='padding:6px 8px;color:#1e293b;text-align:left;'>${value ? value : '-'}</td></tr>`;
+            }
+            html += '</table>';
+            detailContent.innerHTML = html;
+            detailModal.style.display = 'flex';
+        }
+
+        // --- Correction fermeture modale détail patient ---
+        const detailModal = document.getElementById('detailModal');
+        const closeDetailModal = document.getElementById('closeDetailModal');
+        if (closeDetailModal && detailModal) {
+            closeDetailModal.addEventListener('click', function() {
+                detailModal.style.display = 'none';
+            });
+            // Fermer la modale si on clique en dehors
+            detailModal.addEventListener('click', function(e) {
+                if (e.target === detailModal) detailModal.style.display = 'none';
+            });
+            // Fermer la modale avec la touche Echap
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && detailModal.style.display === 'flex') {
+                    detailModal.style.display = 'none';
+                }
+            });
+        }
     </script>
 </body>
 </html>

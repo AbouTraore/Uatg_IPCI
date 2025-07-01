@@ -62,7 +62,7 @@ require_once("identifier.php");
             </li>
 
             <!-- Nav Item - Charts -->
-            <?php if($_SESSION['user']['Type_user']=='TECHNICIEN') { ?>
+            <?php if($_SESSION['user']['Type_user']=='ADMIN') { ?>
                 <li class="nav-item">
                     <a class="nav-link" href="admin.php">
                         <i class="fas fa-fw fa-user"></i>
