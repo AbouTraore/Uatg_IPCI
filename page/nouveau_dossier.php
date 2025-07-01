@@ -1,89 +1,32 @@
 <?php
 // nouveau_dossier.php
 
-// Données simulées des patients (à remplacer par une requête à votre base de données)
-$patients = [
-    [
-        'N_Urap' => '001',
-        'Nom' => 'KOUAME',
-        'Prenom' => 'Jean',
-        'datenaiss' => '1985-05-15',
-        'Age' => '38',
-        'SexeP' => 'Masculin',
-        'contact' => '0101020304',
-        'Adresse' => 'Cocody Riviera',
-        'SituaM' => 'Marié',
-        'reside' => 'Abidjan',
-        'Precise' => '',
-        'Type_log' => 'Villa',
-        'NiveauE' => 'Universitaire',
-        'Profession' => 'Cadre superieur'
-    ],
-    [
-        'N_Urap' => '002',
-        'Nom' => 'TRAORE',
-        'Prenom' => 'Aminata',
-        'datenaiss' => '1992-08-22',
-        'Age' => '31',
-        'SexeP' => 'Féminin',
-        'contact' => '0707080910',
-        'Adresse' => 'Yopougon Selmer',
-        'SituaM' => 'Célibataire',
-        'reside' => 'Abidjan',
-        'Precise' => '',
-        'Type_log' => 'Studio',
-        'NiveauE' => 'Secondaire',
-        'Profession' => 'Secteur informel'
-    ],
-    [
-        'N_Urap' => '003',
-        'Nom' => 'DIABATE',
-        'Prenom' => 'Mohamed',
-        'datenaiss' => '1978-12-03',
-        'Age' => '45',
-        'SexeP' => 'Masculin',
-        'contact' => '0505060708',
-        'Adresse' => 'Bouaké Centre',
-        'SituaM' => 'Marié',
-        'reside' => 'Hors Abidjan',
-        'Precise' => 'Bouaké',
-        'Type_log' => 'Cour commune',
-        'NiveauE' => 'Primaire',
-        'Profession' => 'Secteur informel'
-    ],
-    [
-        'N_Urap' => '004',
-        'Nom' => 'KONE',
-        'Prenom' => 'Mariam',
-        'datenaiss' => '1995-03-10',
-        'Age' => '28',
-        'SexeP' => 'Féminin',
-        'contact' => '0909080706',
-        'Adresse' => 'Adjamé Liberté',
-        'SituaM' => 'Célibataire',
-        'reside' => 'Abidjan',
-        'Precise' => '',
-        'Type_log' => 'Cour commune',
-        'NiveauE' => 'Universitaire',
-        'Profession' => 'Etudiant'
-    ],
-    [
-        'N_Urap' => '005',
-        'Nom' => 'OUATTARA',
-        'Prenom' => 'Ibrahim',
-        'datenaiss' => '1960-07-18',
-        'Age' => '63',
-        'SexeP' => 'Masculin',
-        'contact' => '0202030405',
-        'Adresse' => 'Plateau Centre',
-        'SituaM' => 'Marié',
-        'reside' => 'Abidjan',
-        'Precise' => '',
-        'Type_log' => 'Villa',
-        'NiveauE' => 'Universitaire',
-        'Profession' => 'Retraité'
-    ]
-];
+// Récupération des patients depuis Liste_patient.php
+$patients = [];
+try {
+    // Incluons le fichier Liste_patient.php pour récupérer les données
+    ob_start();
+    include_once 'Liste_patient.php';
+    $output = ob_get_clean();
+    
+    // Si Liste_patient.php retourne du JSON, on le décode
+    $data = json_decode($output, true);
+    if ($data && isset($data['patients']) && is_array($data['patients'])) {
+        $patients = $data['patients'];
+    }
+} catch (Exception $e) {
+    // En cas d'erreur, on garde un tableau vide
+    $patients = [];
+}
+
+// Si aucun patient n'a été récupéré, on peut essayer une approche alternative
+if (empty($patients)) {
+    // Vous pouvez adapter cette partie selon la structure de votre Liste_patient.php
+    // Par exemple, si Liste_patient.php définit une variable $patients_data
+    if (isset($patients_data) && is_array($patients_data)) {
+        $patients = $patients_data;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -489,6 +432,7 @@ $patients = [
             cursor: not-allowed !important;
             box-shadow: none !important;
             border: none !important;
+            transform: none !important;
         }
 
         .floating-label {
@@ -623,6 +567,18 @@ $patients = [
             background: #0047ab;
             color: #fff;
         }
+
+        .empty-patients {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-patients i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -650,22 +606,30 @@ $patients = [
                 </div>
 
                 <div id="patientsList">
-                    <?php foreach($patients as $index => $patient): ?>
-                        <div class="patient-card" onclick="selectPatient(<?php echo $index; ?>)" data-name="<?php echo strtolower($patient['Nom'] . ' ' . $patient['Prenom']); ?>">
-                            <div class="patient-name">
-                                <?php echo htmlspecialchars($patient['Nom'] . ' ' . $patient['Prenom']); ?>
-                            </div>
-                            <div class="patient-details">
-                                <span>N° <?php echo htmlspecialchars($patient['N_Urap']); ?></span>
-                                <span class="patient-age">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <?php echo htmlspecialchars($patient['Age']); ?> ans
-                                </span>
-                            </div>
-                            <button type="button" class="btn-patient-detail" title="Voir le détail" onclick="event.stopPropagation();showPatientDetail(<?php echo $index; ?>)"><i class="fas fa-eye"></i></button>
-                            <a href="modifpatient.php?idU=<?php echo urlencode($patient['N_Urap']); ?>" class="btn-patient-edit" title="Modifier" onclick="event.stopPropagation();"><i class="fas fa-pen"></i></a>
+                    <?php if (empty($patients)): ?>
+                        <div class="empty-patients">
+                            <i class="fas fa-users"></i>
+                            <p>Aucun patient enregistré</p>
+                            <small>Les nouveaux patients apparaîtront ici</small>
                         </div>
-                    <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php foreach($patients as $index => $patient): ?>
+                            <div class="patient-card" onclick="selectPatient(<?php echo $index; ?>)" data-name="<?php echo strtolower($patient['Nom'] . ' ' . $patient['Prenom']); ?>">
+                                <div class="patient-name">
+                                    <?php echo htmlspecialchars($patient['Nom'] . ' ' . $patient['Prenom']); ?>
+                                </div>
+                                <div class="patient-details">
+                                    <span>N° <?php echo htmlspecialchars($patient['N_Urap']); ?></span>
+                                    <span class="patient-age">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <?php echo htmlspecialchars($patient['Age']); ?> ans
+                                    </span>
+                                </div>
+                                <button type="button" class="btn-patient-detail" title="Voir le détail" onclick="event.stopPropagation();showPatientDetail(<?php echo $index; ?>)"><i class="fas fa-eye"></i></button>
+                                <a href="modifpatient.php?idU=<?php echo urlencode($patient['N_Urap']); ?>" class="btn-patient-edit" title="Modifier" onclick="event.stopPropagation();"><i class="fas fa-pen"></i></a>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -821,11 +785,11 @@ $patients = [
                         <i class="fas fa-history"></i>
                         Suivie
                     </button>
-                    <a href="visite.php" class="btn btn-accent">
+                    <a href="#" class="btn btn-accent" id="btnNouvelleVisite">
                         <i class="fas fa-stethoscope"></i>
                         Nouvelle visite
                     </a>
-                    <button type="button" class="btn btn-primary" onclick="window.location.href='visite.php'">
+                    <button type="button" class="btn btn-primary" id="btnEnregistrer">
                         <i class="fas fa-save"></i>
                         Enregistrer
                     </button>
@@ -846,36 +810,43 @@ $patients = [
 
     <script>
         // Données des patients depuis PHP
-        const patients = <?php echo json_encode($patients); ?>;
-
-        // Recherche de patients
-        const searchInput = document.getElementById('searchInput');
-        const patientCards = document.querySelectorAll('.patient-card');
-        const patientsCount = document.getElementById('patientsCount');
-
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            let visibleCount = 0;
-
-            patientCards.forEach(card => {
-                const patientName = card.dataset.name;
-                if (patientName.includes(searchTerm)) {
-                    card.classList.remove('hidden');
-                    visibleCount++;
-                } else {
-                    card.classList.add('hidden');
-                }
-            });
-
-            patientsCount.textContent = visibleCount;
-        });
-
-        // Ajout gestion bouton Modifier
-        const btnModifier = document.getElementById('btnModifier');
+        let patients = <?php echo json_encode($patients); ?>;
         let selectedPatientIndex = null;
 
+        // Éléments DOM
+        const searchInput = document.getElementById('searchInput');
+        const patientsList = document.getElementById('patientsList');
+        const patientsCount = document.getElementById('patientsCount');
+        const btnNouvelleVisite = document.getElementById('btnNouvelleVisite');
+        const btnEnregistrer = document.getElementById('btnEnregistrer');
+        const patientForm = document.getElementById('patientForm');
+        const notesTextarea = document.querySelector('.notes-textarea');
+        const detailModal = document.getElementById('detailModal');
+        const closeDetailModal = document.getElementById('closeDetailModal');
+        const detailContent = document.getElementById('detailContent');
+
+        // Fonction pour mettre à jour l'état du bouton "Nouvelle visite"
+        function updateVisiteButtonState() {
+            if (selectedPatientIndex !== null) {
+                btnNouvelleVisite.style.pointerEvents = 'auto';
+                btnNouvelleVisite.style.opacity = '1';
+                btnNouvelleVisite.style.cursor = 'pointer';
+                const numeroUrap = patients[selectedPatientIndex]['N_Urap'];
+                btnNouvelleVisite.href = 'visite.php?idU=' + encodeURIComponent(numeroUrap);
+            } else {
+                btnNouvelleVisite.style.pointerEvents = 'none';
+                btnNouvelleVisite.style.opacity = '0.5';
+                btnNouvelleVisite.style.cursor = 'not-allowed';
+                btnNouvelleVisite.href = '#';
+            }
+        }
+
+        // Fonction pour sélectionner un patient
         function selectPatient(index) {
+            selectedPatientIndex = index;
+            
             // Animation de sélection
+            const patientCards = document.querySelectorAll('.patient-card');
             patientCards.forEach(card => {
                 card.classList.remove('selected');
             });
@@ -889,7 +860,7 @@ $patients = [
                 if (field) {
                     field.style.transform = 'scale(1.02)';
                     setTimeout(() => {
-                        field.value = patient[key];
+                        field.value = patient[key] || '';
                         field.style.transform = 'scale(1)';
                     }, 100);
                 }
@@ -897,6 +868,9 @@ $patients = [
 
             // Mettre à jour le champ Precise
             setTimeout(togglePreciseField, 200);
+
+            // Mettre à jour l'état du bouton nouvelle visite
+            updateVisiteButtonState();
 
             // Scroll vers le formulaire sur mobile
             if (window.innerWidth <= 1024) {
@@ -906,11 +880,13 @@ $patients = [
             }
         }
 
+        // Fonction pour vider le formulaire
         function clearForm() {
-            document.getElementById('patientForm').reset();
-            document.querySelector('.notes-textarea').value = '';
+            patientForm.reset();
+            notesTextarea.value = '';
             
             // Enlever la sélection des patients
+            const patientCards = document.querySelectorAll('.patient-card');
             patientCards.forEach(card => {
                 card.classList.remove('selected');
             });
@@ -930,9 +906,7 @@ $patients = [
             });
 
             selectedPatientIndex = null;
-            btnModifier.disabled = true;
             updateVisiteButtonState();
-            updateDetailButtonState();
         }
 
         // Fonction pour gérer le champ "Precise"
@@ -979,63 +953,33 @@ $patients = [
             }
         }
 
-        // Initialisation
-        document.addEventListener("DOMContentLoaded", function() {
-            // Mettre la date et l'heure actuelles par défaut
-            const now = new Date();
-            document.getElementById('dateConsultation').value = now.toISOString().split('T')[0];
-            document.getElementById('heureConsultation').value = now.toTimeString().slice(0, 5);
-
-            // Événements
-            document.getElementById("reside").addEventListener("change", togglePreciseField);
-            document.getElementById("datenaiss").addEventListener("input", calculateAge);
+        // Fonction pour afficher les détails d'un patient
+        function showPatientDetail(index) {
+            const patient = patients[index];
+            let html = '<table style="width:100%;border-collapse:collapse;font-size:1em;">';
             
-            // Initialiser l'état du champ Precise
-            togglePreciseField();
+            for (const [key, value] of Object.entries(patient)) {
+                html += <tr><td style='font-weight:600;padding:6px 8px;color:#374151;text-align:left;'>${escapeHtml(key)}</td><td style='padding:6px 8px;color:#1e293b;text-align:left;'>${escapeHtml(value) || '-'}</td></tr>;
+            }
+            
+            html += '</table>';
+            detailContent.innerHTML = html;
+            detailModal.style.display = 'flex';
+        }
 
-            // Animation d'entrée pour les cartes patients
-            patientCards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateX(-20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.3s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateX(0)';
-                }, index * 100);
-            });
-        });
+        // Fonction pour échapper le HTML
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text ? text.replace(/[&<>"']/g, (m) => map[m]) : '';
+        }
 
-        // Amélioration UX: Auto-save en local storage
-        const formInputs = document.querySelectorAll('.form-input, .form-select, .notes-textarea');
-        formInputs.forEach(input => {
-            input.addEventListener('change', () => {
-                localStorage.setItem('dossier_temp_' + input.name, input.value);
-            });
-        });
-
-        // Restaurer les données au chargement
-        window.addEventListener('load', () => {
-            formInputs.forEach(input => {
-                const saved = localStorage.getItem('dossier_temp_' + input.name);
-                if (saved && !input.value) {
-                    input.value = saved;
-                }
-            });
-        });
-
-        // Nettoyer le localStorage après soumission
-        document.getElementById('patientForm').addEventListener('submit', () => {
-            formInputs.forEach(input => {
-                localStorage.removeItem('dossier_temp_' + input.name);
-            });
-        });
-
-        // Remplacer l'action du bouton Enregistrer par un enregistrement AJAX
-        const btnEnregistrer = document.getElementById('btnEnregistrer');
-        const patientForm = document.getElementById('patientForm');
-        const patientsList = document.getElementById('patientsList');
-        const notesTextarea = document.querySelector('.notes-textarea');
-
+        // Fonction pour afficher les messages
         function showMessage(message, type = 'success') {
             let msgDiv = document.getElementById('saveMessage');
             if (!msgDiv) {
@@ -1043,7 +987,7 @@ $patients = [
                 msgDiv.id = 'saveMessage';
                 document.body.appendChild(msgDiv);
             }
-            // Style général
+            
             msgDiv.style.position = 'fixed';
             msgDiv.style.top = '60px';
             msgDiv.style.left = '50%';
@@ -1062,15 +1006,15 @@ $patients = [
             msgDiv.style.boxShadow = '0 6px 24px rgba(0,0,0,0.10)';
             msgDiv.style.opacity = '0';
             msgDiv.style.transition = 'opacity 0.3s';
-            // Ajout d'une icône et d'un titre selon le type
+            
             let icon = '';
             let title = '';
             if(type === 'success') {
-                icon = '<i class="fas fa-info-circle" style="color:#2563eb;font-size:1.5em;"></i>';
-                title = '<span style="color:#2563eb;font-size:1.1em;margin-right:8px;">Succès !</span>';
-                msgDiv.style.background = '#e0edff';
-                msgDiv.style.color = '#1e3a8a';
-                msgDiv.style.border = '2px solid #60a5fa';
+                icon = '<i class="fas fa-check-circle" style="color:#10b981;font-size:1.5em;"></i>';
+                title = '<span style="color:#10b981;font-size:1.1em;margin-right:8px;">Succès !</span>';
+                msgDiv.style.background = '#d1fae5';
+                msgDiv.style.color = '#065f46';
+                msgDiv.style.border = '2px solid #10b981';
             } else {
                 icon = '<i class="fas fa-exclamation-circle" style="color:#ea580c;font-size:1.5em;"></i>';
                 title = '<span style="color:#ea580c;font-size:1.1em;margin-right:8px;">Attention !</span>';
@@ -1078,10 +1022,11 @@ $patients = [
                 msgDiv.style.color = '#9a3412';
                 msgDiv.style.border = '2px solid #fdba74';
             }
+            
             msgDiv.innerHTML = icon + title + '<span>' + message + '</span>';
             msgDiv.style.display = 'flex';
             setTimeout(() => { msgDiv.style.opacity = '1'; }, 10);
-            // Scroll automatique vers la notification
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => {
                 msgDiv.style.opacity = '0';
@@ -1089,108 +1034,217 @@ $patients = [
             }, 5000);
         }
 
+        // Fonction pour ajouter un nouveau patient à la liste
+        function addPatientToList(newPatient) {
+            // Supprimer le message "Aucun patient" s'il existe
+            const emptyMessage = document.querySelector('.empty-patients');
+            if (emptyMessage) {
+                emptyMessage.remove();
+            }
+
+            // Ajouter le patient au tableau
+            patients.push(newPatient);
+            const index = patients.length - 1;
+
+            // Créer la carte du patient
+            const card = document.createElement('div');
+            card.className = 'patient-card';
+            card.setAttribute('data-name', (newPatient.Nom + ' ' + newPatient.Prenom).toLowerCase());
+            card.innerHTML = `
+                <div class="patient-name">
+                    ${escapeHtml(newPatient.Nom)} ${escapeHtml(newPatient.Prenom)}
+                </div>
+                <div class="patient-details">
+                    <span>N° ${escapeHtml(newPatient.N_Urap)}</span>
+                    <span class="patient-age">
+                        <i class="fas fa-calendar-alt"></i>
+                        ${escapeHtml(newPatient.Age)} ans
+                    </span>
+                </div>
+                <button type="button" class="btn-patient-detail" title="Voir le détail">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <a href="modifpatient.php?idU=${encodeURIComponent(newPatient.N_Urap)}" class="btn-patient-edit" title="Modifier">
+                    <i class="fas fa-pen"></i>
+                </a>
+            `;
+
+            // Événements pour la carte
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.btn-patient-detail') && !e.target.closest('.btn-patient-edit')) {
+                    selectPatient(index);
+                }
+            });
+
+            // Événement pour le bouton détail
+            const detailBtn = card.querySelector('.btn-patient-detail');
+            detailBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showPatientDetail(index);
+            });
+
+            // Ajouter la carte à la liste
+            patientsList.appendChild(card);
+
+            // Mettre à jour le compteur
+            patientsCount.textContent = patients.length;
+
+            // Animation d'entrée
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(-20px)';
+            card.offsetHeight; // Force reflow
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+
+            // Sélectionner automatiquement le nouveau patient
+            setTimeout(() => {
+                selectPatient(index);
+            }, 300);
+        }
+
+        // Gestion de l'enregistrement avec AJAX
         btnEnregistrer.addEventListener('click', function(e) {
             e.preventDefault();
-            // Validation JS des champs obligatoires
+            
+            // Validation des champs obligatoires
             const N_Urap = document.getElementById('N_Urap').value.trim();
             const Nom = document.getElementById('Nom').value.trim();
             const Prenom = document.getElementById('Prenom').value.trim();
-            if (!N_Urap || !Nom || !Prenom) {
-                showMessage('Champs obligatoires manquants', 'error');
+            const datenaiss = document.getElementById('datenaiss').value.trim();
+            const contact = document.getElementById('contact').value.trim();
+            const Adresse = document.getElementById('Adresse').value.trim();
+            
+            if (!N_Urap || !Nom || !Prenom || !datenaiss || !contact || !Adresse) {
+                showMessage('Veuillez remplir tous les champs obligatoires', 'error');
                 return;
             }
+            
+            // Créer l'objet patient avec toutes les données du formulaire
+            const patientData = {
+                N_Urap: N_Urap,
+                Nom: Nom,
+                Prenom: Prenom,
+                datenaiss: datenaiss,
+                Age: document.getElementById('Age').value,
+                SexeP: document.getElementById('SexeP').value,
+                contact: contact,
+                Adresse: Adresse,
+                SituaM: document.getElementById('SituaM').value,
+                reside: document.getElementById('reside').value,
+                Precise: document.getElementById('Precise').value,
+                Type_log: document.getElementById('Type_log').value,
+                NiveauE: document.getElementById('NiveauE').value,
+                Profession: document.getElementById('Profession').value
+            };
+
+            // Préparer les données pour l'envoi
             const formData = new FormData(patientForm);
             formData.append('notes', notesTextarea.value);
+            
+            // Afficher un état de chargement
+            btnEnregistrer.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+            btnEnregistrer.disabled = true;
+            
             fetch('traitement_dossier.php', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.patient) {
-                    // Ajouter le patient à la liste de gauche
-                    patients.push(data.patient);
-                    const index = patients.length - 1;
-                    const card = document.createElement('div');
-                    card.className = 'patient-card';
-                    card.setAttribute('onclick', `selectPatient(${index})`);
-                    card.setAttribute('data-name', (data.patient.Nom + ' ' + data.patient.Prenom).toLowerCase());
-                    card.innerHTML = `
-                        <div class="patient-name">${data.patient.Nom} ${data.patient.Prenom}</div>
-                        <div class="patient-details">
-                            <span>N° ${data.patient.N_Urap}</span>
-                            <span class="patient-age"><i class="fas fa-calendar-alt"></i> ${data.patient.Age} ans</span>
-                        </div>
-                    `;
-                    patientsList.appendChild(card);
-                    document.getElementById('patientsCount').textContent = patients.length;
+                if (data.success) {
+                    // Ajouter le patient à la liste
+                    addPatientToList(patientData);
                     showMessage('Patient enregistré avec succès !', 'success');
-                    clearForm();
+                    // Ne pas vider le formulaire pour permettre la sélection
                 } else {
                     showMessage(data.error || 'Erreur lors de l\'enregistrement', 'error');
                 }
             })
-            .catch(() => {
+            .catch(error => {
+                console.error('Erreur:', error);
                 showMessage('Erreur lors de l\'enregistrement', 'error');
+            })
+            .finally(() => {
+                // Restaurer le bouton
+                btnEnregistrer.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+                btnEnregistrer.disabled = false;
             });
         });
 
-        const btnNouvelleVisite = document.getElementById('btnNouvelleVisite');
-
-        function updateVisiteButtonState() {
-            if (selectedPatientIndex !== null) {
-                btnNouvelleVisite.style.pointerEvents = 'auto';
-                btnNouvelleVisite.style.opacity = '1';
-                // Met à jour le lien avec l'id du patient sélectionné si besoin
-                const numeroUrap = patients[selectedPatientIndex]['N_Urap'];
-                btnNouvelleVisite.href = 'visite.php?idU=' + encodeURIComponent(numeroUrap);
-            } else {
-                btnNouvelleVisite.style.pointerEvents = 'none';
-                btnNouvelleVisite.style.opacity = '0.6';
-                btnNouvelleVisite.href = '#';
-            }
-        }
-
-        // Message si on clique sans sélection (sécurité supplémentaire)
+        // Gestion du clic sur "Nouvelle visite"
         btnNouvelleVisite.addEventListener('click', function(e) {
             if (selectedPatientIndex === null) {
                 e.preventDefault();
-                showMessage('Veuillez d\'abord sélectionner un patient enregistré.', 'error');
+                showMessage('Veuillez d\'abord sélectionner un patient enregistré pour créer une nouvelle visite.', 'error');
             }
         });
 
-        // Initialiser l'état du bouton à l'ouverture
-        updateVisiteButtonState();
+        // Fonction de recherche
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const patientCards = document.querySelectorAll('.patient-card');
+            let visibleCount = 0;
 
-        function showPatientDetail(index) {
-            const p = patients[index];
-            let html = '<table style="width:100%;border-collapse:collapse;font-size:1em;">';
-            for (const [key, value] of Object.entries(p)) {
-                html += `<tr><td style='font-weight:600;padding:6px 8px;color:#374151;text-align:left;'>${key}</td><td style='padding:6px 8px;color:#1e293b;text-align:left;'>${value ? value : '-'}</td></tr>`;
-            }
-            html += '</table>';
-            detailContent.innerHTML = html;
-            detailModal.style.display = 'flex';
-        }
+            patientCards.forEach(card => {
+                const patientName = card.dataset.name;
+                if (patientName && patientName.includes(searchTerm)) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
 
-        // --- Correction fermeture modale détail patient ---
-        const detailModal = document.getElementById('detailModal');
-        const closeDetailModal = document.getElementById('closeDetailModal');
+            patientsCount.textContent = visibleCount;
+        });
+
+        // Gestion de la modale
         if (closeDetailModal && detailModal) {
             closeDetailModal.addEventListener('click', function() {
                 detailModal.style.display = 'none';
             });
-            // Fermer la modale si on clique en dehors
+            
             detailModal.addEventListener('click', function(e) {
                 if (e.target === detailModal) detailModal.style.display = 'none';
             });
-            // Fermer la modale avec la touche Echap
+            
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && detailModal.style.display === 'flex') {
                     detailModal.style.display = 'none';
                 }
             });
         }
+
+        // Initialisation
+        document.addEventListener("DOMContentLoaded", function() {
+            // Mettre la date et l'heure actuelles par défaut
+            const now = new Date();
+            document.getElementById('dateConsultation').value = now.toISOString().split('T')[0];
+            document.getElementById('heureConsultation').value = now.toTimeString().slice(0, 5);
+
+            // Événements
+            document.getElementById("reside").addEventListener("change", togglePreciseField);
+            document.getElementById("datenaiss").addEventListener("input", calculateAge);
+            
+            // Initialiser l'état du champ Precise
+            togglePreciseField();
+
+            // Initialiser l'état du bouton "Nouvelle visite"
+            updateVisiteButtonState();
+
+            // Animation d'entrée pour les cartes patients existantes
+            const patientCards = document.querySelectorAll('.patient-card');
+            patientCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateX(0)';
+                }, index * 100);
+            });
+        });
     </script>
 </body>
 </html>
