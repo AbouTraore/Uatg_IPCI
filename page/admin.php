@@ -208,6 +208,17 @@ if ($reste === 0) {
             background: linear-gradient(135deg, #059669 0%, #10b981 100%);
             box-shadow: 0 8px 32px rgba(16,185,129,0.18);
             transform: translateY(-2px) scale(1.03);
+            .main-content {
+    margin-left: 280px; /* correspond exactement à la largeur de la sidebar */
+    padding: 20px;
+    
+    #content {
+    padding-top: 80px; /* ou une valeur adaptée à la hauteur de ton menu haut */
+    box-sizing: border-box;
+}
+
+}
+
         }
     </style>
 
@@ -220,6 +231,13 @@ if ($reste === 0) {
       <?php
            require_once("menu_gauche.php");
        ?>
+<div class="main-content">
+    <!-- Ici, place ton tableau, formulaires ou contenu -->
+    <h2>Liste des utilisateurs</h2>
+    <table>
+        <!-- Ton tableau ici -->
+    </table>
+</div>
 
         <!-- End of Sidebar -->
 
