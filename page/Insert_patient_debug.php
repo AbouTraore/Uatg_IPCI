@@ -2,6 +2,12 @@
 require_once("identifier.php");
 require_once("connexion.php");
 
+// Activer l'affichage des erreurs
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+echo "<h2>Debug - Insertion Patient</h2>";
+
 // Récupération des données du formulaire
 $Numero_urap = isset($_POST['N_Urap']) ? trim($_POST['N_Urap']) : "";
 $Nom_patient = isset($_POST['Nom']) ? trim($_POST['Nom']) : "";
@@ -18,15 +24,35 @@ $Type_logement = isset($_POST['Type_log']) ? trim($_POST['Type_log']) : "";
 $Niveau_etude = isset($_POST['NiveauE']) ? trim($_POST['NiveauE']) : "";
 $Profession = isset($_POST['Profession']) ? trim($_POST['Profession']) : "";
 
+echo "<h3>Données reçues :</h3>";
+echo "<ul>";
+echo "<li>Numero_urap: " . htmlspecialchars($Numero_urap) . "</li>";
+echo "<li>Nom_patient: " . htmlspecialchars($Nom_patient) . "</li>";
+echo "<li>Prenom_patient: " . htmlspecialchars($Prenom_patient) . "</li>";
+echo "<li>Age: " . htmlspecialchars($Age) . "</li>";
+echo "<li>Sexe_patient: " . htmlspecialchars($Sexe_patient) . "</li>";
+echo "<li>Date_naissance: " . htmlspecialchars($Date_naissance) . "</li>";
+echo "<li>Contact_patient: " . htmlspecialchars($Contact_patient) . "</li>";
+echo "<li>Adresse: " . htmlspecialchars($Adresse) . "</li>";
+echo "<li>Situation_matrimoniale: " . htmlspecialchars($Situation_matrimoniale) . "</li>";
+echo "<li>Lieu_résidence: " . htmlspecialchars($Lieu_résidence) . "</li>";
+echo "<li>Precise: " . htmlspecialchars($Precise) . "</li>";
+echo "<li>Type_logement: " . htmlspecialchars($Type_logement) . "</li>";
+echo "<li>Niveau_etude: " . htmlspecialchars($Niveau_etude) . "</li>";
+echo "<li>Profession: " . htmlspecialchars($Profession) . "</li>";
+echo "</ul>";
+
 // Validation des champs obligatoires
 if (empty($Numero_urap) || empty($Nom_patient) || empty($Prenom_patient) || empty($Date_naissance) || empty($Contact_patient)) {
-    header('Location: ajouter_patient.php?error=' . urlencode('Veuillez remplir tous les champs obligatoires'));
+    echo "<p style='color: red;'>❌ Erreur : Veuillez remplir tous les champs obligatoires</p>";
+    echo "<p><a href='ajouter_patient.php'>Retour au formulaire</a></p>";
     exit();
 }
 
 // Validation du champ "Precise" pour "Hors Abidjan"
 if ($Lieu_résidence === "Hors Abidjan" && empty($Precise)) {
-    header('Location: ajouter_patient.php?error=' . urlencode('Veuillez préciser le lieu de résidence pour "Hors Abidjan"'));
+    echo "<p style='color: red;'>❌ Erreur : Veuillez préciser le lieu de résidence pour 'Hors Abidjan'</p>";
+    echo "<p><a href='ajouter_patient.php'>Retour au formulaire</a></p>";
     exit();
 }
 
@@ -36,12 +62,15 @@ if ($Lieu_résidence === "Abidjan") {
 }
 
 try {
+    echo "<h3>Vérification de la base de données...</h3>";
+    
     // Vérifier si le numéro URAP existe déjà
     $checkStmt = $pdo->prepare("SELECT Numero_urap FROM patient WHERE Numero_urap = ?");
     $checkStmt->execute([$Numero_urap]);
     
     if ($checkStmt->rowCount() > 0) {
-        header('Location: ajouter_patient.php?error=' . urlencode('Le numéro URAP "' . $Numero_urap . '" existe déjà dans la base de données'));
+        echo "<p style='color: red;'>❌ Erreur : Le numéro URAP '" . htmlspecialchars($Numero_urap) . "' existe déjà dans la base de données</p>";
+        echo "<p><a href='ajouter_patient.php'>Retour au formulaire</a></p>";
         exit();
     }
 
@@ -51,6 +80,9 @@ try {
     
     $stmt = $pdo->query("SHOW COLUMNS FROM patient LIKE 'date_creation'");
     $hasDateCreation = $stmt->rowCount() > 0;
+
+    echo "<p>Colonne Adresse : " . ($hasAdresse ? "✅ Présente" : "❌ Absente") . "</p>";
+    echo "<p>Colonne date_creation : " . ($hasDateCreation ? "✅ Présente" : "❌ Absente") . "</p>";
 
     // Construire la requête selon la structure détectée
     if ($hasAdresse && $hasDateCreation) {
@@ -81,25 +113,39 @@ try {
         );
     }
 
+    echo "<h3>Requête SQL :</h3>";
+    echo "<pre>" . htmlspecialchars($req) . "</pre>";
+    
+    echo "<h3>Paramètres :</h3>";
+    echo "<pre>" . print_r($params, true) . "</pre>";
+
     $stmt = $pdo->prepare($req);
     $result = $stmt->execute($params);
 
     if ($result) {
-        header('Location: ajouter_patient.php?success=' . urlencode('Patient ' . $Nom_patient . ' ' . $Prenom_patient . ' enregistré avec succès ! Numéro URAP : ' . $Numero_urap));
-        exit();
+        echo "<p style='color: green;'>✅ Patient " . htmlspecialchars($Nom_patient) . " " . htmlspecialchars($Prenom_patient) . " enregistré avec succès !</p>";
+        echo "<p>Numéro URAP : " . htmlspecialchars($Numero_urap) . "</p>";
+        
+        // Vérifier que le patient a bien été enregistré
+        $stmt = $pdo->prepare("SELECT * FROM patient WHERE Numero_urap = ?");
+        $stmt->execute([$Numero_urap]);
+        $patient = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($patient) {
+            echo "<p style='color: green;'>✅ Patient trouvé dans la base de données</p>";
+        } else {
+            echo "<p style='color: red;'>❌ Patient non trouvé dans la base de données</p>";
+        }
+        
+        echo "<p><a href='ajouter_patient.php'>Retour au formulaire</a></p>";
     } else {
-        header('Location: ajouter_patient.php?error=' . urlencode('Erreur lors de l\'enregistrement du patient'));
-        exit();
+        echo "<p style='color: red;'>❌ Erreur lors de l'enregistrement du patient</p>";
+        echo "<p><a href='ajouter_patient.php'>Retour au formulaire</a></p>";
     }
 
 } catch (PDOException $e) {
-    if ($e->getCode() == 23000) {
-        // Erreur de doublon (clé unique sur Numero_urap)
-        header('Location: ajouter_patient.php?error=' . urlencode('Le numéro URAP "' . $Numero_urap . '" existe déjà dans la base de données'));
-    } else {
-        // Autres erreurs PDO
-        header('Location: ajouter_patient.php?error=' . urlencode('Erreur d\'enregistrement : ' . $e->getMessage()));
-    }
-    exit();
+    echo "<p style='color: red;'>❌ Erreur PDO : " . htmlspecialchars($e->getMessage()) . "</p>";
+    echo "<p>Code d'erreur : " . $e->getCode() . "</p>";
+    echo "<p><a href='ajouter_patient.php'>Retour au formulaire</a></p>";
 }
-?>
+?> 

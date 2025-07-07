@@ -381,7 +381,7 @@ require_once("identifier.php");
 
             <!-- Histoire de la maladie -->
             <li class="nav-item">
-                <a class="nav-link" href="Histoire de la maladie.ph">
+                <a class="nav-link" href="Histoire de la maladie.php">
                     <i class="fas fa-file-medical-alt text-success"></i>
                     <span>Histoire de la maladie</span>
                 </a>

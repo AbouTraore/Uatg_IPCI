@@ -10,7 +10,6 @@ $Age = isset($_POST['Age']) ? trim($_POST['Age']) : "";
 $Sexe_patient = isset($_POST['SexeP']) ? trim($_POST['SexeP']) : "";
 $Date_naissance = isset($_POST['datenaiss']) ? trim($_POST['datenaiss']) : "";
 $Contact_patient = isset($_POST['contact']) ? trim($_POST['contact']) : "";
-$Adresse = isset($_POST['Adresse']) ? trim($_POST['Adresse']) : "";
 $Situation_matrimoniale = isset($_POST['SituaM']) ? trim($_POST['SituaM']) : "";
 $Lieu_résidence = isset($_POST['reside']) ? trim($_POST['reside']) : "";
 $Precise = isset($_POST['Precise']) ? trim($_POST['Precise']) : "";
@@ -45,47 +44,24 @@ try {
         exit();
     }
 
-    // Vérifier la structure de la table pour adapter la requête
-    $stmt = $pdo->query("SHOW COLUMNS FROM patient LIKE 'Adresse'");
-    $hasAdresse = $stmt->rowCount() > 0;
-    
-    $stmt = $pdo->query("SHOW COLUMNS FROM patient LIKE 'date_creation'");
-    $hasDateCreation = $stmt->rowCount() > 0;
+    // Version précédente sans les champs Adresse et date_creation
+    $req = "INSERT INTO patient (
+        Numero_urap, Nom_patient, Prenom_patient, Age, Sexe_patient,
+        Date_naissance, Contact_patient, Situation_matrimoniale, 
+        Lieu_résidence, Precise, Type_logement, Niveau_etude, Profession
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    // Construire la requête selon la structure détectée
-    if ($hasAdresse && $hasDateCreation) {
-        // Version avec tous les champs
-        $req = "INSERT INTO patient (
-            Numero_urap, Nom_patient, Prenom_patient, Age, Sexe_patient,
-            Date_naissance, Contact_patient, Adresse, Situation_matrimoniale, 
-            Lieu_résidence, Precise, Type_logement, Niveau_etude, Profession, date_creation
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-
-        $params = array(
-            $Numero_urap, $Nom_patient, $Prenom_patient, $Age, $Sexe_patient,
-            $Date_naissance, $Contact_patient, $Adresse, $Situation_matrimoniale,
-            $Lieu_résidence, $Precise, $Type_logement, $Niveau_etude, $Profession
-        );
-    } else {
-        // Version sans les champs Adresse et date_creation
-        $req = "INSERT INTO patient (
-            Numero_urap, Nom_patient, Prenom_patient, Age, Sexe_patient,
-            Date_naissance, Contact_patient, Situation_matrimoniale, 
-            Lieu_résidence, Precise, Type_logement, Niveau_etude, Profession
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        $params = array(
-            $Numero_urap, $Nom_patient, $Prenom_patient, $Age, $Sexe_patient,
-            $Date_naissance, $Contact_patient, $Situation_matrimoniale,
-            $Lieu_résidence, $Precise, $Type_logement, $Niveau_etude, $Profession
-        );
-    }
+    $params = array(
+        $Numero_urap, $Nom_patient, $Prenom_patient, $Age, $Sexe_patient,
+        $Date_naissance, $Contact_patient, $Situation_matrimoniale,
+        $Lieu_résidence, $Precise, $Type_logement, $Niveau_etude, $Profession
+    );
 
     $stmt = $pdo->prepare($req);
     $result = $stmt->execute($params);
 
     if ($result) {
-        header('Location: ajouter_patient.php?success=' . urlencode('Patient ' . $Nom_patient . ' ' . $Prenom_patient . ' enregistré avec succès ! Numéro URAP : ' . $Numero_urap));
+        header('Location: ajouter_patient.php?success=' . urlencode('Patient enregistré avec succès ! Numéro URAP : ' . $Numero_urap));
         exit();
     } else {
         header('Location: ajouter_patient.php?error=' . urlencode('Erreur lors de l\'enregistrement du patient'));

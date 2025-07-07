@@ -363,18 +363,19 @@ CREATE TABLE IF NOT EXISTS `patient` (
   `Precise` varchar(35) NOT NULL,
   `Type_logement` varchar(25) NOT NULL,
   `Niveau_etude` varchar(15) NOT NULL,
-  `Profession` varchar(25) NOT NULL
+  `Profession` varchar(25) NOT NULL,
+  `date_creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Déchargement des données de la table `patient`
 --
 
-INSERT INTO `patient` (`Numero_urap`, `Nom_patient`, `Prenom_patient`, `Age`, `Sexe_patient`, `Date_naissance`, `Contact_patient`, `Situation_matrimoniale`, `Lieu_résidence`, `Precise`, `Type_logement`, `Niveau_etude`, `Profession`) VALUES
-('123', 'Traoré', 'Abou', 24, 'Masculin', '2001-01-02', '0102030405', 'Marié', 'Abidjan', '', 'Baraquement', 'Aucun', 'Aucun'),
-('123', 'Traoré', 'Abou', 24, 'Masculin', '2001-01-02', '0102030405', 'Marié', 'Abidjan', '', 'Baraquement', 'Aucun', 'Aucun'),
-('123', 'kpouadio', 'fanta', 24, 'Féminin', '2001-01-02', '0102030405', 'Marié', 'Abidjan', '', 'Baraquement', 'Aucun', 'Aucun'),
-('joiutj', 'euguigi', 'erpuigeuigz', 23, 'Masculin', '2020-05-20', '020000', 'Marié', 'Abidjan', '', 'Baraquement', 'Aucun', 'Aucun');
+INSERT INTO `patient` (`Numero_urap`, `Nom_patient`, `Prenom_patient`, `Age`, `Sexe_patient`, `Date_naissance`, `Contact_patient`, `Situation_matrimoniale`, `Lieu_résidence`, `Precise`, `Type_logement`, `Niveau_etude`, `Profession`, `date_creation`) VALUES
+('123', 'Traoré', 'Abou', 24, 'Masculin', '2001-01-02', '0102030405', 'Marié', 'Abidjan', '', 'Baraquement', 'Aucun', 'Aucun', '2025-06-10 14:16:00'),
+('123', 'Traoré', 'Abou', 24, 'Masculin', '2001-01-02', '0102030405', 'Marié', 'Abidjan', '', 'Baraquement', 'Aucun', 'Aucun', '2025-06-10 14:16:00'),
+('123', 'kpouadio', 'fanta', 24, 'Féminin', '2001-01-02', '0102030405', 'Marié', 'Abidjan', '', 'Baraquement', 'Aucun', 'Aucun', '2025-06-10 14:16:00'),
+('joiutj', 'euguigi', 'erpuigeuigz', 23, 'Masculin', '2020-05-20', '020000', 'Marié', 'Abidjan', '', 'Baraquement', 'Aucun', 'Aucun', '2025-06-10 14:16:00');
 
 -- --------------------------------------------------------
 
