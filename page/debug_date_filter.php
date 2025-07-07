@@ -68,4 +68,34 @@ try {
 }
 
 echo "<p><a href='ajouter_patient.php'>Retour au formulaire</a></p>";
+
+// Bouton retour global en bas de page
+?>
+<div style="width:100%;display:flex;justify-content:center;margin:32px 0 0 0;">
+  <button onclick="window.history.back()" class="btn-retour-global">
+    <i class="fas fa-arrow-left"></i> Retour
+  </button>
+</div>
+<style>
+.btn-retour-global {
+  background: linear-gradient(135deg, #e0e7ff 0%, #bae6fd 100%);
+  color: #0047ab;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 32px;
+  font-size: 1.1em;
+  font-weight: 600;
+  box-shadow: 0 2px 8px 0 #0047ab22;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-retour-global:hover {
+  background: linear-gradient(135deg, #10b981 0%, #1e90ff 100%);
+  color: white;
+}
+</style>
 ?> 

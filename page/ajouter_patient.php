@@ -135,136 +135,101 @@ if (isset($_GET['error'])) {
       background: var(--gray-200);
     }
     .main-content {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 0;
+      display: flex;
       min-height: 600px;
+      height: 100%;
     }
     .sidebar {
-      background: var(--gray-50);
-      border-right: 1px solid var(--gray-200);
-      padding: 24px;
+      background: linear-gradient(135deg, #f3f8ff 0%, #e5e7eb 100%);
+      border-right: 2px solid var(--primary-light);
+      padding: 32px 24px 32px 24px;
       overflow-y: auto;
       height: 100%;
       display: flex;
       flex-direction: column;
+      min-width: 380px;
+      box-shadow: 4px 0 18px -8px #0047ab22;
+      border-radius: 24px 0 0 24px;
+    }
+    .content-area {
+      flex: 1;
+      padding: 40px 32px;
+      background: white;
+      border-radius: 0 24px 24px 0;
+      box-shadow: 0 2px 12px 0 #0047ab11;
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
     }
     .search-container {
       position: relative;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     .search-input {
       width: 100%;
       padding: 12px 16px 12px 44px;
-      border: 2px solid var(--gray-200);
+      border: 2px solid var(--primary-light);
       border-radius: 12px;
-      font-size: 14px;
-      transition: all 0.2s ease;
-      background: white;
+      font-size: 15px;
+      background: #f8fafc;
+      transition: all 0.2s;
     }
     .search-input:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+      box-shadow: 0 0 0 3px #bae6fd55;
     }
     .search-icon {
       position: absolute;
       left: 16px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--gray-400);
+      color: var(--primary-light);
     }
     .patients-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      gap: 8px;
+      margin-bottom: 18px;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid var(--primary-light);
     }
     .patients-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--gray-700);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
       display: flex;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
-    }
-    .today-indicator {
-      background: linear-gradient(135deg, var(--accent) 0%, #059669 100%);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
     .patients-count {
       background: var(--primary);
       color: white;
-      padding: 4px 12px;
+      padding: 4px 14px;
       border-radius: 20px;
-      font-size: 12px;
-      font-weight: 500;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 1px 4px 0 #0047ab22;
     }
     .patient-card {
       background: white;
       border: 2px solid var(--gray-200);
       border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 12px;
+      padding: 16px 16px 8px 16px;
+      margin-bottom: 18px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(.4,2,.6,1);
       position: relative;
       overflow: hidden;
+      box-shadow: 0 2px 8px 0 #0047ab0a;
       animation: slideInCard 0.4s ease-out;
-    }
-    @keyframes slideInCard {
-      from {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-    .patient-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: var(--gray-300);
-      transition: all 0.3s ease;
-    }
-    .patient-card:hover {
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-    .patient-card:hover::before {
-      background: var(--primary);
-      width: 6px;
     }
     .patient-card.selected {
       border-color: var(--primary);
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
       color: white;
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-    .patient-card.selected::before {
-      background: white;
-      width: 6px;
+      box-shadow: 0 6px 24px 0 #0047ab22;
     }
     .patient-name {
       font-weight: 600;
@@ -282,25 +247,45 @@ if (isset($_GET['error'])) {
       font-size: 10px;
       font-weight: 500;
     }
-    .patient-card.selected .patient-time {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-    }
     .patient-details {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.875rem;
-      opacity: 0.8;
+      font-size: 0.95rem;
+      opacity: 0.9;
+      margin-bottom: 8px;
     }
     .patient-age {
       display: flex;
       align-items: center;
       gap: 4px;
     }
-    .content-area {
-      padding: 32px;
-      background: white;
+    .patient-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .btn-patient-detail {
+      background: linear-gradient(135deg, #e0e7ff 0%, #bae6fd 100%);
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 1.4em;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px 0 #0047ab22;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      margin: 0 auto;
+    }
+    .btn-patient-detail:hover {
+      background: linear-gradient(135deg, #10b981 0%, #1e90ff 100%);
+      color: white;
+      box-shadow: 0 4px 16px 0 #10b98133;
     }
     .form-section {
       margin-bottom: 32px;
@@ -585,15 +570,32 @@ if (isset($_GET['error'])) {
         width: fit-content;
       }
     }
+    .btn-retour-global {
+      background: linear-gradient(135deg, #e0e7ff 0%, #bae6fd 100%);
+      color: #0047ab;
+      border: none;
+      border-radius: 30px;
+      padding: 12px 32px;
+      font-size: 1.1em;
+      font-weight: 600;
+      box-shadow: 0 2px 8px 0 #0047ab22;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-retour-global:hover {
+      background: linear-gradient(135deg, #10b981 0%, #1e90ff 100%);
+      color: white;
+    }
   </style>
 </head>
 
 <body>
   <div class="container">
     <div class="header">
-      <button onclick="window.history.back()" class="btn-retour">
-        <i class="fas fa-arrow-left"></i> Retour
-      </button>
       <h1><i class="fas fa-user-plus"></i> Ajouter Patient</h1>
       <p>Remplissez le formulaire pour ajouter un nouveau patient</p>
     </div>
@@ -767,6 +769,13 @@ if (isset($_GET['error'])) {
     </div>
   </div>
   
+  <!-- Bouton retour global en bas de page -->
+  <div style="width:100%;display:flex;justify-content:center;margin:32px 0 0 0;">
+    <button onclick="window.history.back()" class="btn-retour-global">
+      <i class="fas fa-arrow-left"></i> Retour
+    </button>
+  </div>
+  
   <script>
     // Afficher la date du jour
     function updateTodayDate() {
@@ -783,7 +792,7 @@ if (isset($_GET['error'])) {
       const refreshBtn = document.querySelector('.refresh-btn i');
       refreshBtn.style.animation = 'spin 1s linear infinite';
       
-      fetch('get_patients_today.php')
+      fetch('get_patients_list.php')
         .then(response => response.json())
         .then(data => {
           const patientsList = document.getElementById('patientsList');
@@ -800,7 +809,7 @@ if (isset($_GET['error'])) {
           
           if (data.length === 0) {
             console.log('Aucun patient trouvé pour aujourd\'hui');
-            patientsList.innerHTML = '<div class="empty-patients"><i class="fas fa-calendar-day"></i><p>Aucun patient enregistré aujourd\'hui</p><small>Les nouveaux patients apparaîtront ici</small></div>';
+            patientsList.innerHTML = '<div class="empty-patients"><i class="fas fa-users"></i><p>Aucun patient enregistré</p><small>Les nouveaux patients apparaîtront ici</small></div>';
             patientsCount.textContent = '0';
             refreshBtn.style.animation = '';
             return;
@@ -811,17 +820,23 @@ if (isset($_GET['error'])) {
           let html = '';
           
           data.forEach((patient, index) => {
+            // Sécuriser les champs pour éviter 'undefined'
+            const nom = patient.Nom_patient ? patient.Nom_patient : '';
+            const prenom = patient.Prenom_patient ? patient.Prenom_patient : '';
+            const numeroUrap = patient.Numero_urap ? patient.Numero_urap : '';
+            const age = patient.Age ? patient.Age : '';
+            const heure = patient.heure_creation ? patient.heure_creation : '';
             html += `
-              <div class="patient-card" data-name="${(patient.Nom_patient + ' ' + patient.Prenom_patient).toLowerCase()}" data-urap="${patient.Numero_urap}" onclick="selectPatient(${index})" style="animation-delay: ${index * 0.1}s">
+              <div class="patient-card" data-name="${(nom + ' ' + prenom).toLowerCase()}" data-urap="${numeroUrap}" onclick="selectPatient(${index})" style="animation-delay: ${index * 0.1}s">
                 <div class="patient-name">
-                  ${patient.Nom_patient} ${patient.Prenom_patient}
-                  <span class="patient-time">${patient.heure_creation}</span>
+                  ${nom} ${prenom}
+                  <span class="patient-time">${heure}</span>
                 </div>
                 <div class="patient-details">
-                  <span>N° ${patient.Numero_urap}</span>
+                  <span>N° ${numeroUrap}</span>
                   <span class="patient-age">
                     <i class="fas fa-calendar-alt"></i>
-                    ${patient.Age} ans
+                    ${age} ans
                   </span>
                 </div>
               </div>
@@ -834,7 +849,7 @@ if (isset($_GET['error'])) {
           window.patientsData = data;
           
           refreshBtn.style.animation = '';
-          checkCurrentPatientInList();
+          setTimeout(checkCurrentPatientInList, 0);
         })
         .catch(error => {
           console.error('Erreur:', error);
@@ -1034,6 +1049,29 @@ if (isset($_GET['error'])) {
         }, 5000);
       <?php endif; ?>
     });
+
+    // Ajouter la fonction fillPatientForm
+    function fillPatientForm(index) {
+      if (!window.patientsData || !window.patientsData[index]) return;
+      const patient = window.patientsData[index];
+      document.getElementById('N_Urap').value = patient.Numero_urap || '';
+      document.getElementById('Nom').value = patient.Nom_patient || '';
+      document.getElementById('Prenom').value = patient.Prenom_patient || '';
+      document.getElementById('Age').value = patient.Age || '';
+      document.getElementById('SexeP').value = patient.Sexe_patient || 'Masculin';
+      document.getElementById('datenaiss').value = patient.Date_naissance || '';
+      document.getElementById('contact').value = patient.Contact_patient || '';
+      document.getElementById('Adresse').value = patient.Adresse || '';
+      document.getElementById('SituaM').value = patient.Situation_matrimoniale || 'Célibataire';
+      document.getElementById('reside').value = patient.Lieu_résidence || 'Abidjan';
+      document.getElementById('Precise').value = patient.Precise || '';
+      document.getElementById('Type_log').value = patient.Type_logement || 'Studio';
+      document.getElementById('NiveauE').value = patient.Niveau_etude || 'Aucun';
+      document.getElementById('Profession').value = patient.Profession || 'Aucun';
+      togglePreciseField();
+      // Ne pas toucher à la sélection de la carte ni au bouton Nouvelle visite ici
+      checkCurrentPatientInList();
+    }
   </script>
 </body>
 </html>
