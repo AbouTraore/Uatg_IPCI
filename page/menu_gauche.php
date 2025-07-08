@@ -403,9 +403,6 @@ require_once("identifier.php");
                 </a>
                 <div id="collapseForm" class="collapse">
                     <div class="collapse-header">Gestion des Patients</div>
-                    <a class="collapse-item" href="ajouter_patient.php">
-                        <i class="fas fa-user-plus"></i> Ajouter un Patient
-                    </a>
                     <a class="collapse-item" href="Liste_patient.php">
                         <i class="fas fa-list"></i> Liste des Patients
                     </a>

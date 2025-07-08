@@ -3,14 +3,15 @@ require_once("identifier.php");
 require_once("connexion.php");
 
 $name = isset($_GET['name']) ? $_GET['name'] : "";
-$size = isset($_GET['size']) ? $_GET['size'] : 3;
-$page = isset($_GET['page']) ? $_GET['page'] : 1;
+$size = isset($_GET['size']) ? intval($_GET['size']) : 3;
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($page - 1) * $size;
-$reqliste = "SELECT * FROM patient where Nom_patient like '%$name%'";
-$reqcount = "SELECT COUNT(*) countP FROM patient";
-$resultatliste = $pdo->query($reqliste);
-$resultatcount = $pdo->query($reqcount);
-$tabcount = $resultatcount->fetch();
+
+// Préparer la requête de comptage filtrée
+$reqcount = "SELECT COUNT(*) as countP FROM patient WHERE Nom_patient LIKE :name";
+$stmtCount = $pdo->prepare($reqcount);
+$stmtCount->execute([':name' => "%$name%"]);
+$tabcount = $stmtCount->fetch();
 $nbrliste = $tabcount['countP'];
 $reste = $nbrliste % $size;
 
@@ -19,6 +20,12 @@ if ($reste === 0) {
 } else {
     $nbrPage = floor($nbrliste / $size) + 1;
 }
+
+// Préparer la requête de liste paginée et filtrée
+$reqliste = "SELECT * FROM patient WHERE Nom_patient LIKE :name ORDER BY Nom_patient ASC LIMIT $size OFFSET $offset";
+$stmtListe = $pdo->prepare($reqliste);
+$stmtListe->bindValue(':name', "%$name%", PDO::PARAM_STR);
+$stmtListe->execute();
 ?>
 
 <!DOCTYPE html>
@@ -578,7 +585,7 @@ if ($reste === 0) {
                         Chercher
                     </button>
                     
-                    <a href="patient.php" class="btn btn-success">
+                    <a href="nouveau_dossier.php" class="btn btn-success">
                         <i class="fas fa-user-plus"></i>
                         Ajouter un patient
                     </a>
@@ -614,7 +621,7 @@ if ($reste === 0) {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while($patient = $resultatliste->fetch()): ?>
+                                <?php while($patient = $stmtListe->fetch()): ?>
                                     <tr>
                                         <td>
                                             <strong><?php echo htmlspecialchars($patient["Numero_urap"]); ?></strong>
@@ -663,7 +670,7 @@ if ($reste === 0) {
                                     Aucun patient n'est enregistré dans la base de données.
                                 <?php endif; ?>
                             </p>
-                            <a href="patient.php" class="btn btn-success" style="margin-top: 16px;">
+                            <a href="nouveau_dossier.php" class="btn btn-success" style="margin-top: 16px;">
                                 <i class="fas fa-user-plus"></i>
                                 Ajouter le premier patient
                             </a>
@@ -693,9 +700,9 @@ if ($reste === 0) {
 
     <!-- Bouton retour global en bas de page -->
     <div style="width:100%;display:flex;justify-content:center;margin:32px 0 0 0;">
-        <button onclick="window.history.back()" class="btn-retour-global">
-            <i class="fas fa-arrow-left"></i> Retour
-        </button>
+        <a href="acceuil.php" class="btn-retour-global">
+            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+        </a>
     </div>
 
     <script>
