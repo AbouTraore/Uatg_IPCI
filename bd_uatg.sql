@@ -31,7 +31,7 @@ USE `uatg`;
 
 DROP TABLE IF EXISTS `antecedents_ist_genicologiques`;
 CREATE TABLE IF NOT EXISTS `antecedents_ist_genicologiques` (
-  `ID_antecedants` int NOT NULL,
+  `Numero_urap` int NOT NULL,
   `Avez_vous_eu_des_pertes_vaginales_ces_deux_derniers_mois` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `Avez_vous_eu_des_douleurs_au_bas_ventre_ces_deux_derniers_mois` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Avez_vous_eu_des_plaies_vaginales_ces_deux_derniers_mois` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `antecedents_ist_genicologiques` (
   `Quel_tampon_utilisez_vous_pandant_les_regles` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `avez_vous` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Prenez_vous_un_antibiotique_actullement` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  PRIMARY KEY (`ID_antecedants`)
+  PRIMARY KEY (`Numero_urap`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -167,13 +167,13 @@ CREATE TABLE IF NOT EXISTS `examen_secretion_uretrale` (
 
 DROP TABLE IF EXISTS `habitude_sexuelles`;
 CREATE TABLE IF NOT EXISTS `habitude_sexuelles` (
-  `ID_habitude` int NOT NULL,
+  `Numero_urap` int NOT NULL,
   `Quel_type_rapport_avez_vous_` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Pratiquez_vous__fellation` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Avez_vous_changé_partenais_ces_deux_dernier_mois` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Utilisez_vous_preservatif` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Pratqez_le_cunni` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  PRIMARY KEY (`ID_habitude`)
+  PRIMARY KEY (`Numero_urap`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -184,14 +184,14 @@ CREATE TABLE IF NOT EXISTS `habitude_sexuelles` (
 
 DROP TABLE IF EXISTS `histoire_maladie_recours_soins`;
 CREATE TABLE IF NOT EXISTS `histoire_maladie_recours_soins` (
-  `ID_histoire_maladie` int NOT NULL,
+  `Numero_urap` int NOT NULL,
   `Motif_consultation` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Signe_fonctionnels` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Qui_avez_vous_consulté_pour_ces_signes` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Vous_a_t_il_prescrit_des_medicaments` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Si_oui_preciser` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `Depuis_combien_de_temps_vous_vous_traitez` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  PRIMARY KEY (`ID_histoire_maladie`)
+  PRIMARY KEY (`Numero_urap`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

@@ -13,32 +13,26 @@ $messageType = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // Récupération et nettoyage des données du formulaire
+        $numero_urap = htmlspecialchars(trim($_POST['numero_urap'] ?? ''));
         $type_rapport = htmlspecialchars($_POST['Quel_type_rapport_avez_vous'] ?? '');
         $pratique_fellation = htmlspecialchars($_POST['Pratiquez_vous__fellation'] ?? '');
         $change_partenaire = htmlspecialchars($_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois'] ?? '');
         $utilise_preservatif = htmlspecialchars($_POST['Utilisez_vous_preservatif'] ?? '');
 
-        // Basic validation: ensure all fields are selected (as they are radio buttons, one will always be selected)
-        if (empty($type_rapport) || empty($pratique_fellation) || empty($change_partenaire) || empty($utilise_preservatif)) {
-            throw new Exception("Veuillez répondre à toutes les questions.");
+        // Validation: tous les champs sont requis
+        if (empty($numero_urap) || empty($type_rapport) || empty($pratique_fellation) || empty($change_partenaire) || empty($utilise_preservatif)) {
+            throw new Exception("Veuillez remplir tous les champs, y compris le numéro URAP.");
         }
 
-        // Here you would typically insert or update data into your database.
-        // For demonstration, we'll just show a success message.
-        // Example of a PDO insert (assuming a table 'habitude_sexuelle' exists)
-        /*
-        $sql = "INSERT INTO habitude_sexuelle (
-            type_rapport, pratique_fellation, change_partenaire, utilise_preservatif, date_enregistrement
-        ) VALUES (
-            :type_rapport, :pratique_fellation, :change_partenaire, :utilise_preservatif, NOW()
-        )";
-
+        // Insertion en base de données
+        $sql = "INSERT INTO habitude_sexuelles (Numero_urap, Quel_type_rapport_avez_vous_, Pratiquez_vous__fellation, Avez_vous_changé_partenais_ces_deux_dernier_mois, Utilisez_vous_preservatif) VALUES (?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         $result = $stmt->execute([
-            ':type_rapport' => $type_rapport,
-            ':pratique_fellation' => $pratique_fellation,
-            ':change_partenaire' => $change_partenaire,
-            ':utilise_preservatif' => $utilise_preservatif
+            $numero_urap,
+            $type_rapport,
+            $pratique_fellation,
+            $change_partenaire,
+            $utilise_preservatif
         ]);
 
         if ($result) {
@@ -48,12 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = 'Erreur lors de l\'enregistrement de l\'habitude sexuelle.';
             $messageType = 'error';
         }
-        */
-
-        // For this example, assuming success if all fields are present
-        $message = 'Habitude sexuelle enregistrée avec succès !';
-        $messageType = 'success';
-
     } catch (Exception $e) {
         $message = 'Erreur : ' . $e->getMessage();
         $messageType = 'error';
@@ -464,6 +452,18 @@ $form_action = $_SERVER['PHP_SELF'];
             <?php endif; ?>
 
             <form id="sexualHabitForm" method="POST" action="<?php echo $form_action; ?>">
+                <div class="form-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-id-card"></i>
+                        Numéro URAP
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label class="form-label" for="numero_urap">Numéro URAP du patient</label>
+                            <input type="text" name="numero_urap" id="numero_urap" value="<?php echo isset($_POST['numero_urap']) ? htmlspecialchars($_POST['numero_urap']) : ''; ?>" required />
+                        </div>
+                    </div>
+                </div>
 
                 <div class="form-section">
                     <h2 class="section-title">
