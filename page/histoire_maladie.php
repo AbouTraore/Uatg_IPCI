@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     ]);
                     
                     if ($result) {
-                        header('Location: Histoire%20de%20la%20maladie.php?success=' . urlencode('Histoire de la maladie enregistrée avec succès !'));
+                        header('Location: histoire_maladie.php?success=' . urlencode('Histoire de la maladie enregistrée avec succès !'));
                         exit;
                     } else {
                         $message = 'Erreur lors de l\'enregistrement de l\'histoire de la maladie.';
@@ -1157,5 +1157,5 @@ if (isset($_GET['idU'])) {
             <?php endif; ?>
         });
     </script>
-</body> 
-</html>
+</body>
+</html> 

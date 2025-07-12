@@ -433,6 +433,30 @@ $form_action = $_SERVER['PHP_SELF'];
             }
         }
     </style>
+    <style>
+        .input-urap {
+            padding: 14px 18px;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            background: var(--gray-50);
+            color: var(--primary-dark);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: border 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .input-urap:focus {
+            border: 2px solid var(--accent);
+            box-shadow: 0 4px 12px rgba(16,185,129,0.10);
+            background: #fff;
+        }
+        .form-label[for="numero_urap"] {
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -460,7 +484,7 @@ $form_action = $_SERVER['PHP_SELF'];
                     <div class="form-grid">
                         <div class="form-field">
                             <label class="form-label" for="numero_urap">Numéro URAP du patient</label>
-                            <input type="text" name="numero_urap" id="numero_urap" value="<?php echo isset($_POST['numero_urap']) ? htmlspecialchars($_POST['numero_urap']) : ''; ?>" required />
+                            <input type="text" name="numero_urap" id="numero_urap" class="input-urap" value="<?php echo isset($_POST['numero_urap']) ? htmlspecialchars($_POST['numero_urap']) : ''; ?>" required />
                         </div>
                     </div>
                 </div>

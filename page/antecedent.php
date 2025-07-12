@@ -11,13 +11,13 @@ $messageType = '';
 
 // Traitement du formulaire si soumis
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Debug: Afficher les données reçues
+    error_log("Données POST reçues: " . print_r($_POST, true));
+    
     try {
-        // DEBUG: Afficher toutes les données POST
-        error_log("POST Data: " . print_r($_POST, true));
-        
         // Récupération des données communes
-        $numero_urap = trim($_POST['numero_urap'] ?? '');
-        $sexe_patient = trim($_POST['sexe_patient'] ?? '');
+        $numero_urap = $_GET['urap'] ?? $_POST['numero_urap'] ?? null;
+        $sexe_patient = $_POST['sexe_patient'] ?? '';
         
         if (empty($numero_urap) || empty($sexe_patient)) {
             $message = "Veuillez remplir le numéro URAP et sélectionner le sexe du patient.";
@@ -26,144 +26,88 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Traitement selon le sexe
             if ($sexe_patient === 'masculin') {
                 // Traitement pour homme
-                $antecedent_homme = trim($_POST['antecedent_homme'] ?? '');
-                $antibiotique_homme = trim($_POST['antibiotique_homme'] ?? 'non');
-                $preciser_antibiotique_homme = trim($_POST['preciser_antibiotique_homme'] ?? '');
+                $antecedent_homme = $_POST['antecedent_homme'] ?? '';
+                $antibiotique_homme = $_POST['antibiotique_homme'] ?? '';
+                $preciser_antibiotique_homme = $_POST['preciser_antibiotique_homme'] ?? '';
                 
                 if (empty($antecedent_homme)) {
                     $message = "Veuillez renseigner les antécédents pour un patient masculin.";
                     $messageType = 'error';
                 } else {
-                    // Vérifier doublon pour homme
-                    $check = $pdo->prepare("SELECT COUNT(*) FROM antecedents_ist_hommes WHERE Numero_urap = ?");
-                    $check->execute([$numero_urap]);
-                    if ($check->fetchColumn() > 0) {
-                        $message = "Un enregistrement existe déjà pour ce patient (homme).";
-                        $messageType = 'error';
+                    // Insertion pour homme
+                    $sql = "INSERT INTO antecedents_ist_hommes (
+                        Numero_urap, antecedent, antibiotique_actuel, preciser_antibiotique, date_creation
+                    ) VALUES (?, ?, ?, ?, NOW())";
+                    
+                    $stmt = $pdo->prepare($sql);
+                    $result = $stmt->execute([
+                        $numero_urap,
+                        $antecedent_homme,
+                        $antibiotique_homme,
+                        $preciser_antibiotique_homme
+                    ]);
+                    
+                    if ($result) {
+                        $message = 'Antécédents IST (Homme) enregistrés avec succès !';
+                        $messageType = 'success';
                     } else {
-                        // Insertion pour homme
-                        $sql = "INSERT INTO antecedents_ist_hommes (
-                            Numero_urap, antecedent, antibiotique_actuel, preciser_antibiotique
-                        ) VALUES (?, ?, ?, ?)";
-                        
-                        $stmt = $pdo->prepare($sql);
-                        $result = $stmt->execute([
-                            $numero_urap,
-                            $antecedent_homme,
-                            $antibiotique_homme,
-                            $preciser_antibiotique_homme
-                        ]);
-                        
-                        if ($result) {
-                            header('Location: antecedents_ist.php?success=' . urlencode('Antécédents IST (Homme) enregistrés avec succès !'));
-                            exit;
-                        } else {
-                            $message = 'Erreur lors de l\'enregistrement des antécédents (homme).';
-                            $messageType = 'error';
-                        }
+                        $message = 'Erreur lors de l\'enregistrement des antécédents.';
+                        $messageType = 'error';
                     }
                 }
             } elseif ($sexe_patient === 'feminin') {
                 // Traitement pour femme
-                $pertes_vaginales = trim($_POST['pertes_vaginales'] ?? '');
-                $douleurs_bas_ventre = trim($_POST['douleurs_bas_ventre'] ?? 'non');
-                $plaies_genitales = trim($_POST['plaies_genitales'] ?? '');
-                $douleur_rapport = trim($_POST['douleur_rapport'] ?? '');
+                $pertes_vaginales = $_POST['pertes_vaginales'] ?? '';
+                $douleurs_bas_ventre = $_POST['douleurs_bas_ventre'] ?? '';
+                $plaies_genitales = $_POST['plaies_genitales'] ?? '';
+                $douleur_rapport = $_POST['douleur_rapport'] ?? '';
                 
                 if (empty($pertes_vaginales) || empty($plaies_genitales) || empty($douleur_rapport)) {
-                    $message = "Veuillez remplir tous les champs obligatoires (marqués d'un *)";
+                    $message = "Veuillez remplir tous les champs obligatoires pour une patiente féminine.";
                     $messageType = 'error';
                 } else {
-                    // Vérifier doublon pour femme
-                    $check = $pdo->prepare("SELECT COUNT(*) FROM antecedents_ist_genicologiques WHERE Numero_urap = ?");
-                    $check->execute([$numero_urap]);
-                    if ($check->fetchColumn() > 0) {
-                        $message = "Un enregistrement existe déjà pour cette patiente (femme).";
-                        $messageType = 'error';
+                    // Insertion pour femme (table existante)
+                    $gestite = $_POST['gestite'] ?? '';
+                    $parite = $_POST['parite'] ?? '';
+                    $date_regles = $_POST['date_regles'] ?? '';
+                    $ivg = $_POST['ivg'] ?? '';
+                    $toilette_vaginale = $_POST['toilette_vaginale'] ?? '';
+                    $avec_quoi = $_POST['avec_quoi'] ?? '';
+                    $autre = $_POST['autre'] ?? '';
+                    $enceinte = $_POST['enceinte'] ?? '';
+                    $tampons = $_POST['tampons'] ?? '';
+                    $consultation = $_POST['consultation'] ?? '';
+                    $medicaments = $_POST['medicaments'] ?? '';
+                    $preciser_medicaments = $_POST['preciser_medicaments'] ?? '';
+                    $duree_traitement = $_POST['duree_traitement'] ?? '';
+                    
+                    $sql = "INSERT INTO antecedents_ist_genicologiques (
+                        Numero_urap, Avez_vous_eu_des_pertes_vaginales_ces_deux_derniers_mois, 
+                        Avez_vous_eu_des_douleurs_au_bas_ventre_ces_deux_derniers_mois, 
+                        Avez_vous_eu_des_plaies_vaginales_ces_deux_derniers_mois, 
+                        Avez_vous_eu_mal_au_cours_des_derniers_rapport_sexuels, 
+                        Antecedant_ist_genicologique_gestité, Antecedant_ist_genicologique_parité, 
+                        Date_des_derniers_regles, Avez_vous_eu_des_ivgcette_annee_moins_d_un_an, 
+                        Praiquez_vous_une_toillette_vaginale_avec_les_doigt_, Si_oui_avec_quoi, 
+                        autre, etes_vous_enceinte, Quel_tampon_utilisez_vous_pandant_les_regles, 
+                        qui_avez_vous_consulte, medicaments_prescrits, preciser_medicaments, 
+                        duree_traitement, date_creation
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                    
+                    $stmt = $pdo->prepare($sql);
+                    $result = $stmt->execute([
+                        $numero_urap, $pertes_vaginales, $douleurs_bas_ventre, $plaies_genitales,
+                        $douleur_rapport, $gestite, $parite, $date_regles, $ivg, $toilette_vaginale,
+                        $avec_quoi, $autre, $enceinte, $tampons, $consultation, $medicaments,
+                        $preciser_medicaments, $duree_traitement
+                    ]);
+                    
+                    if ($result) {
+                        $message = 'Antécédents IST (Femme) enregistrés avec succès !';
+                        $messageType = 'success';
                     } else {
-                        // Récupération de tous les champs femme avec valeurs par défaut
-                        $gestite = trim($_POST['gestite'] ?? '') ?: null;
-                        $parite = trim($_POST['parite'] ?? '') ?: null;
-                        $date_regles = trim($_POST['date_regles'] ?? '') ?: null;
-                        $ivg = trim($_POST['ivg'] ?? 'non');
-                        $toilette_vaginale = trim($_POST['toilette_vaginale'] ?? 'non');
-                        $avec_quoi = trim($_POST['avec_quoi'] ?? '');
-                        $autre = trim($_POST['autre'] ?? '');
-                        $enceinte = trim($_POST['enceinte'] ?? '');
-                        $tampons = trim($_POST['tampons'] ?? '');
-                        $consultation = trim($_POST['consultation'] ?? '');
-                        $medicaments = trim($_POST['medicaments'] ?? 'non');
-                        $preciser_medicaments = trim($_POST['preciser_medicaments'] ?? '');
-                        $duree_traitement = trim($_POST['duree_traitement'] ?? '');
-                        
-                        // Nettoyer les champs conditionnels
-                        if ($toilette_vaginale === 'non') {
-                            $avec_quoi = '';
-                            $autre = '';
-                        } elseif ($avec_quoi !== 'Autre') {
-                            $autre = '';
-                        }
-                        
-                        if ($medicaments === 'non') {
-                            $preciser_medicaments = '';
-                            $duree_traitement = '';
-                        }
-                        
-                        // Requête SQL simplifiée - utilisez votre vraie structure de table
-                        $sql = "INSERT INTO antecedents_ist_genicologiques (
-                            Numero_urap, 
-                            Avez_vous_eu_des_pertes_vaginales_ces_deux_derniers_mois, 
-                            Avez_vous_eu_des_douleurs_au_bas_ventre_ces_deux_derniers_mois, 
-                            Avez_vous_eu_des_plaies_vaginales_ces_deux_derniers_mois, 
-                            Avez_vous_eu_mal_au_cours_des_derniers_rapport_sexuels, 
-                            Antecedant_ist_genicologique_gestité, 
-                            Antecedant_ist_genicologique_parité, 
-                            Date_des_derniers_regles, 
-                            Avez_vous_eu_des_ivgcette_annee__moins_d_un_an_, 
-                            Praiquez_vous_une_toillette_vaginale_avec_les_doigt_, 
-                            Si_oui_avec_quoi, 
-                            autre, 
-                            etes_vous_enceinte, 
-                            Quel_tampon_utilisez_vous_pandant_les_regles, 
-                            qui_avez_vous_consulte, 
-                            medicaments_prescrits, 
-                            preciser_medicaments, 
-                            duree_traitement
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                        
-                        $params = [
-                            $numero_urap, 
-                            $pertes_vaginales, 
-                            $douleurs_bas_ventre, 
-                            $plaies_genitales,
-                            $douleur_rapport, 
-                            $gestite, 
-                            $parite, 
-                            $date_regles, 
-                            $ivg, 
-                            $toilette_vaginale,
-                            $avec_quoi, 
-                            $autre, 
-                            $enceinte, 
-                            $tampons, 
-                            $consultation, 
-                            $medicaments,
-                            $preciser_medicaments, 
-                            $duree_traitement
-                        ];
-                        
-                        $stmt = $pdo->prepare($sql);
-                        $result = $stmt->execute($params);
-                        
-                        if ($result) {
-                            header('Location: antecedents_ist.php?success=' . urlencode('Antécédents IST (Femme) enregistrés avec succès !'));
-                            exit;
-                        } else {
-                            $errorInfo = $stmt->errorInfo();
-                            $message = 'Erreur lors de l\'enregistrement : ' . $errorInfo[2];
-                            $messageType = 'error';
-                            error_log("Erreur SQL: " . print_r($errorInfo, true));
-                        }
+                        $message = 'Erreur lors de l\'enregistrement des antécédents.';
+                        $messageType = 'error';
                     }
                 }
             }
@@ -172,22 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (Exception $e) {
         $message = 'Erreur : ' . $e->getMessage();
         $messageType = 'error';
-        error_log("Exception: " . $e->getMessage());
     }
-}
-
-// Gestion des messages de retour
-if (isset($_GET['success'])) {
-    $message = urldecode($_GET['success']);
-    $messageType = 'success';
-} elseif (isset($_GET['error'])) {
-    $message = urldecode($_GET['error']);
-    $messageType = 'error';
 }
 
 // Récupération des informations du patient si ID fourni
 $patient = null;
-$numero_urap = '';
 if (isset($_GET['urap'])) {
     $numero_urap = $_GET['urap'];
     $stmt = $pdo->prepare("SELECT * FROM patient WHERE Numero_urap = ?");
@@ -823,7 +756,7 @@ if (isset($_GET['urap'])) {
                 </div>
             <?php endif; ?>
 
-            <form id="antecedentsForm" method="POST">
+            <form id="antecedentsForm" method="POST" action="antecedent.php<?php echo isset($_GET['urap']) ? '?urap=' . htmlspecialchars($_GET['urap']) : ''; ?>">
                 
                 <!-- Étape 1: Numéro URAP -->
                 <div class="form-section show" id="section-patient">
@@ -835,7 +768,7 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label for="numero_urap" class="form-label required">Numéro URAP</label>
                             <input type="text" id="numero_urap" name="numero_urap" class="form-input" 
-                                   value="<?php echo htmlspecialchars($numero_urap); ?>" required 
+                                   value="<?php echo htmlspecialchars($numero_urap ?? ''); ?>" required 
                                    placeholder="Saisir le numéro URAP du patient" />
                         </div>
                     </div>
@@ -879,7 +812,7 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label required">Avez-vous déjà...</label>
                             <select class="form-select" name="antecedent_homme" id="antecedent_homme" required>
-                                <option value="">-- Sélectionnez une option --</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
                                 <option value="deja ete atteint d'une MST">été atteint d'une MST</option>
                                 <option value="brulure au niveau des organes genitaux">eu des brûlures au niveau des organes génitaux</option>
                                 <option value="eu des traumatismes testiculaires">eu des traumatismes testiculaires</option>
@@ -891,8 +824,8 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label">Prenez-vous un antibiotique actuellement ?</label>
                             <select class="form-select" name="antibiotique_homme" id="antibiotique_homme">
-                                <option value="">-- Sélectionnez une option --</option>
-                                <option value="non">Non</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
+                                <option value="non" selected>Non</option>
                                 <option value="oui">Oui</option>
                             </select>
                         </div>
@@ -915,7 +848,7 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label required">Avez-vous eu des pertes vaginales ces deux derniers mois ?</label>
                             <select class="form-select" name="pertes_vaginales" required>
-                                <option value="">-- Sélectionnez une option --</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
                                 <option value="non">Non</option>
                                 <option value="oui">Oui</option>
                             </select>
@@ -924,8 +857,8 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label">Avez-vous eu des douleurs au bas ventre ces deux derniers mois ?</label>
                             <select class="form-select" name="douleurs_bas_ventre">
-                                <option value="">-- Sélectionnez une option --</option>
-                                <option value="non">Non</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
+                                <option value="non" selected>Non</option>
                                 <option value="oui">Oui</option>
                             </select>
                         </div>
@@ -933,7 +866,7 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label required">Avez-vous eu des plaies génitales ces deux derniers mois ?</label>
                             <select class="form-select" name="plaies_genitales" required>
-                                <option value="">-- Sélectionnez une option --</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
                                 <option value="non">Non</option>
                                 <option value="oui">Oui</option>
                             </select>
@@ -942,7 +875,7 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label required">Avez-vous eu mal au cours des derniers rapports sexuels ?</label>
                             <select class="form-select" name="douleur_rapport" required>
-                                <option value="">-- Sélectionnez une option --</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
                                 <option value="non">Non</option>
                                 <option value="oui">Oui</option>
                             </select>
@@ -966,8 +899,7 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label">Avez-vous fait une IVG cette année (moins d'un an) ?</label>
                             <select class="form-select" name="ivg">
-                                <option value="">-- Sélectionnez une option --</option>
-                                <option value="non">Non</option>
+                                <option value="non" selected>Non</option>
                                 <option value="oui">Oui</option>
                             </select>
                         </div>
@@ -975,8 +907,8 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label">Pratiquez-vous une toilette vaginale (avec les doigts) ?</label>
                             <select class="form-select" name="toilette_vaginale" id="toilette_vaginale">
-                                <option value="">-- Sélectionnez une option --</option>
-                                <option value="non">Non</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
+                                <option value="non" selected>Non</option>
                                 <option value="oui">Oui</option>
                             </select>
                         </div>
@@ -984,7 +916,7 @@ if (isset($_GET['urap'])) {
                         <div class="form-field disabled" id="field-avec-quoi">
                             <label class="form-label">Si oui, avec quoi ?</label>
                             <select class="form-select" name="avec_quoi" id="avec_quoi" disabled>
-                                <option value="">-- Sélectionnez une option --</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
                                 <option value="Eau simple">Eau simple</option>
                                 <option value="Eau et savon">Eau et savon</option>
                                 <option value="Produit pharmaceutique">Produit pharmaceutique</option>
@@ -1001,8 +933,8 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label">Êtes-vous enceinte ?</label>
                             <select class="form-select" name="enceinte">
-                                <option value="">-- Sélectionnez une option --</option>
-                                <option value="Femme non enceinte">Femme non enceinte</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
+                                <option value="Femme non enceinte" selected>Femme non enceinte</option>
                                 <option value="Femme enceinte">Femme enceinte</option>
                                 <option value="Femme menopausée">Femme ménopausée</option>
                             </select>
@@ -1011,8 +943,8 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label">Quels tampons utilisez-vous pendant les règles ?</label>
                             <select class="form-select" name="tampons">
-                                <option value="">-- Sélectionnez une option --</option>
-                                <option value="Serviettes hygieniques">Serviettes hygiéniques</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
+                                <option value="Serviettes hygieniques" selected>Serviettes hygiéniques</option>
                                 <option value="Tampons(tampax)">Tampons (tampax)</option>
                                 <option value="Serviettes non hygieniques">Serviettes non hygiéniques</option>
                             </select>
@@ -1021,8 +953,8 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label">Qui avez-vous consulté pour ces signes ?</label>
                             <select class="form-select" name="consultation">
-                                <option value="">-- Sélectionnez une option --</option>
-                                <option value="Medecin">Médecin</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
+                                <option value="Medecin" selected>Médecin</option>
                                 <option value="Infirmier">Infirmier</option>
                                 <option value="Pharmacien">Pharmacien</option>
                                 <option value="Technicien de laboratoire">Technicien de laboratoire</option>
@@ -1034,8 +966,8 @@ if (isset($_GET['urap'])) {
                         <div class="form-field">
                             <label class="form-label">Vous a-t-il prescrit des médicaments ?</label>
                             <select class="form-select" name="medicaments" id="medicaments">
-                                <option value="">-- Sélectionnez une option --</option>
-                                <option value="non">Non</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
+                                <option value="non" selected>Non</option>
                                 <option value="oui">Oui</option>
                             </select>
                         </div>
@@ -1049,7 +981,8 @@ if (isset($_GET['urap'])) {
                         <div class="form-field disabled" id="field-duree-traitement">
                             <label class="form-label">Depuis combien de temps vous vous traitez ?</label>
                             <select class="form-select" name="duree_traitement" id="duree_traitement" disabled>
-                                <option value="">-- Sélectionnez une durée --</option>
+                                <option value="" selected disabled>Sélectionnez...</option>
+                                <option value="">Sélectionnez une durée</option>
                                 <option value="07jours">07 jours</option>
                                 <option value="15jours">15 jours</option>
                                 <option value="1mois">1 mois</option>
@@ -1068,13 +1001,11 @@ if (isset($_GET['urap'])) {
                         <i class="fas fa-arrow-right"></i>
                         Suivant
                     </button>
-                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                        <i class="fas fa-undo"></i>
-                        Réinitialiser
-                    </button>
-                    <button type="submit" class="btn btn-success" id="btnSubmit" style="display: none;">
-                        <i class="fas fa-paper-plane"></i>
-                        Soumettre
+
+                    <!-- Bouton Enregistrer -->
+                    <button type="button" class="btn btn-primary" onclick="enregistrerFormulaire()">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
                     </button>
                 </div>
             </form>
@@ -1122,16 +1053,13 @@ if (isset($_GET['urap'])) {
         function updateButtons() {
             const btnPrevious = document.getElementById('btnPrevious');
             const btnNext = document.getElementById('btnNext');
-            const btnSubmit = document.getElementById('btnSubmit');
 
             btnPrevious.style.display = currentStep > 1 ? 'inline-flex' : 'none';
             
             if (currentStep < totalSteps) {
                 btnNext.style.display = 'inline-flex';
-                btnSubmit.style.display = 'none';
             } else {
                 btnNext.style.display = 'none';
-                btnSubmit.style.display = 'inline-flex';
             }
         }
 
@@ -1177,93 +1105,76 @@ if (isset($_GET['urap'])) {
             }
         }
 
-        // Gestion des champs conditionnels
-        function setupConditionalFields() {
-            // Section homme
-            const antibiotiqueHomme = document.getElementById('antibiotique_homme');
-            if (antibiotiqueHomme) {
-                antibiotiqueHomme.addEventListener('change', function() {
-                    const preciserField = document.getElementById('field-preciser-homme');
-                    const preciserInput = document.getElementById('preciser_antibiotique_homme');
-                    
-                    if (this.value === 'oui') {
-                        preciserField.classList.remove('disabled');
-                        preciserInput.disabled = false;
-                        preciserInput.required = true;
-                    } else {
-                        preciserField.classList.add('disabled');
-                        preciserInput.disabled = true;
-                        preciserInput.required = false;
-                        preciserInput.value = '';
-                    }
-                });
+        // Gestion des champs conditionnels pour la section homme
+        document.getElementById('antibiotique_homme').addEventListener('change', function() {
+            const preciserField = document.getElementById('field-preciser-homme');
+            const preciserInput = document.getElementById('preciser_antibiotique_homme');
+            
+            if (this.value === 'oui') {
+                preciserField.classList.remove('disabled');
+                preciserInput.disabled = false;
+                preciserInput.required = true;
+            } else {
+                preciserField.classList.add('disabled');
+                preciserInput.disabled = true;
+                preciserInput.required = false;
+                preciserInput.value = '';
             }
+        });
 
-            // Section femme - toilette vaginale
-            const toiletteVaginale = document.getElementById('toilette_vaginale');
-            if (toiletteVaginale) {
-                toiletteVaginale.addEventListener('change', function() {
-                    const avecQuoiField = document.getElementById('field-avec-quoi');
-                    const avecQuoiSelect = document.getElementById('avec_quoi');
-                    
-                    if (this.value === 'oui') {
-                        avecQuoiField.classList.remove('disabled');
-                        avecQuoiSelect.disabled = false;
-                    } else {
-                        avecQuoiField.classList.add('disabled');
-                        avecQuoiSelect.disabled = true;
-                        avecQuoiSelect.value = '';
-                        // Réinitialiser aussi le champ "autre"
-                        document.getElementById('field-autre').classList.add('disabled');
-                        document.getElementById('autre').disabled = true;
-                        document.getElementById('autre').value = '';
-                    }
-                });
+        // Gestion des champs conditionnels pour la section femme
+        document.getElementById('toilette_vaginale').addEventListener('change', function() {
+            const avecQuoiField = document.getElementById('field-avec-quoi');
+            const avecQuoiSelect = document.getElementById('avec_quoi');
+            
+            if (this.value === 'oui') {
+                avecQuoiField.classList.remove('disabled');
+                avecQuoiSelect.disabled = false;
+            } else {
+                avecQuoiField.classList.add('disabled');
+                avecQuoiSelect.disabled = true;
+                avecQuoiSelect.value = '';
+                // Réinitialiser aussi le champ "autre"
+                document.getElementById('field-autre').classList.add('disabled');
+                document.getElementById('autre').disabled = true;
+                document.getElementById('autre').value = '';
             }
+        });
 
-            // Section femme - avec quoi
-            const avecQuoi = document.getElementById('avec_quoi');
-            if (avecQuoi) {
-                avecQuoi.addEventListener('change', function() {
-                    const autreField = document.getElementById('field-autre');
-                    const autreInput = document.getElementById('autre');
-                    
-                    if (this.value === 'Autre') {
-                        autreField.classList.remove('disabled');
-                        autreInput.disabled = false;
-                    } else {
-                        autreField.classList.add('disabled');
-                        autreInput.disabled = true;
-                        autreInput.value = '';
-                    }
-                });
+        document.getElementById('avec_quoi').addEventListener('change', function() {
+            const autreField = document.getElementById('field-autre');
+            const autreInput = document.getElementById('autre');
+            
+            if (this.value === 'Autre') {
+                autreField.classList.remove('disabled');
+                autreInput.disabled = false;
+            } else {
+                autreField.classList.add('disabled');
+                autreInput.disabled = true;
+                autreInput.value = '';
             }
+        });
 
-            // Section femme - médicaments
-            const medicaments = document.getElementById('medicaments');
-            if (medicaments) {
-                medicaments.addEventListener('change', function() {
-                    const preciserField = document.getElementById('field-preciser-medicaments');
-                    const preciserInput = document.getElementById('preciser_medicaments');
-                    const dureeField = document.getElementById('field-duree-traitement');
-                    const dureeSelect = document.getElementById('duree_traitement');
-                    
-                    if (this.value === 'oui') {
-                        preciserField.classList.remove('disabled');
-                        preciserInput.disabled = false;
-                        dureeField.classList.remove('disabled');
-                        dureeSelect.disabled = false;
-                    } else {
-                        preciserField.classList.add('disabled');
-                        preciserInput.disabled = true;
-                        preciserInput.value = '';
-                        dureeField.classList.add('disabled');
-                        dureeSelect.disabled = true;
-                        dureeSelect.value = '';
-                    }
-                });
+        document.getElementById('medicaments').addEventListener('change', function() {
+            const preciserField = document.getElementById('field-preciser-medicaments');
+            const preciserInput = document.getElementById('preciser_medicaments');
+            const dureeField = document.getElementById('field-duree-traitement');
+            const dureeSelect = document.getElementById('duree_traitement');
+            
+            if (this.value === 'oui') {
+                preciserField.classList.remove('disabled');
+                preciserInput.disabled = false;
+                dureeField.classList.remove('disabled');
+                dureeSelect.disabled = false;
+            } else {
+                preciserField.classList.add('disabled');
+                preciserInput.disabled = true;
+                preciserInput.value = '';
+                dureeField.classList.add('disabled');
+                dureeSelect.disabled = true;
+                dureeSelect.value = '';
             }
-        }
+        });
 
         // Fonction pour réinitialiser le formulaire
         function resetForm() {
@@ -1286,8 +1197,13 @@ if (isset($_GET['urap'])) {
 
         // Validation du formulaire avant soumission
         document.getElementById('antecedentsForm').addEventListener('submit', function(e) {
-            console.log('Soumission du formulaire...');
-            
+            // Vérifier d'abord si on est à la dernière étape
+            if (currentStep < totalSteps) {
+                e.preventDefault();
+                alert('Veuillez compléter toutes les étapes avant de soumettre le formulaire.');
+                return;
+            }
+
             const sexeSelected = document.querySelector('input[name="sexe_patient"]:checked');
             
             if (!sexeSelected) {
@@ -1295,8 +1211,6 @@ if (isset($_GET['urap'])) {
                 alert('Veuillez sélectionner le sexe du patient.');
                 return;
             }
-            
-            console.log('Sexe sélectionné:', sexeSelected.value);
             
             // Validation spécifique selon le sexe
             if (sexeSelected.value === 'masculin') {
@@ -1311,32 +1225,70 @@ if (isset($_GET['urap'])) {
                 const plaiesGenitales = document.querySelector('select[name="plaies_genitales"]').value;
                 const douleurRapport = document.querySelector('select[name="douleur_rapport"]').value;
                 
-                console.log('Validation femme:');
-                console.log('Pertes vaginales:', pertesVaginales);
-                console.log('Plaies génitales:', plaiesGenitales);
-                console.log('Douleur rapport:', douleurRapport);
-                
                 if (!pertesVaginales || !plaiesGenitales || !douleurRapport) {
                     e.preventDefault();
-                    alert('Veuillez remplir tous les champs obligatoires (marqués d\'un *)');
+                    alert('Veuillez remplir tous les champs obligatoires pour la section femme.');
                     return;
                 }
             }
 
-            // Animation de soumission
-            const submitBtn = document.getElementById('btnSubmit');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
-            submitBtn.disabled = true;
-            
-            console.log('Formulaire prêt à être soumis');
+            // Permettre la soumission du formulaire
+            return true;
         });
+
+        // Fonction pour enregistrer le formulaire
+        function enregistrerFormulaire() {
+            console.log('Enregistrement du formulaire...');
+            
+            // Vérifier si on est à la dernière étape
+            if (currentStep < totalSteps) {
+                alert('Veuillez compléter toutes les étapes avant d\'enregistrer le formulaire.');
+                return;
+            }
+            
+            // Validation des champs obligatoires
+            const sexeSelected = document.querySelector('input[name="sexe_patient"]:checked');
+            if (!sexeSelected) {
+                alert('Veuillez sélectionner le sexe du patient.');
+                return;
+            }
+            
+            // Validation spécifique selon le sexe
+            if (sexeSelected.value === 'masculin') {
+                const antecedentHomme = document.querySelector('select[name="antecedent_homme"]').value;
+                if (!antecedentHomme) {
+                    alert('Veuillez sélectionner un antécédent pour la section homme.');
+                    return;
+                }
+            } else if (sexeSelected.value === 'feminin') {
+                const pertesVaginales = document.querySelector('select[name="pertes_vaginales"]').value;
+                const plaiesGenitales = document.querySelector('select[name="plaies_genitales"]').value;
+                const douleurRapport = document.querySelector('select[name="douleur_rapport"]').value;
+                
+                if (!pertesVaginales || !plaiesGenitales || !douleurRapport) {
+                    alert('Veuillez remplir tous les champs obligatoires pour la section femme.');
+                    return;
+                }
+            }
+            
+            // Animation de chargement
+            const btnEnregistrer = document.querySelector('button[onclick="enregistrerFormulaire()"]');
+            const originalContent = btnEnregistrer.innerHTML;
+            btnEnregistrer.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+            btnEnregistrer.disabled = true;
+            
+            // Soumettre le formulaire
+            const form = document.getElementById('antecedentsForm');
+            form.submit();
+        }
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             updateProgress();
             updateButtons();
             showSection('section-patient');
-            setupConditionalFields();
+            
+
             
             // Effacer le message de succès après 5 secondes
             <?php if ($messageType === 'success'): ?>
