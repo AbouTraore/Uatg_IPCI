@@ -890,6 +890,8 @@ if (isset($_GET['error'])) {
       btnNouvelleVisite.style.pointerEvents = 'auto';
       btnNouvelleVisite.style.opacity = '1';
       btnNouvelleVisite.style.cursor = 'pointer';
+      
+
       btnNouvelleVisite.href = 'visite.php?idU=' + encodeURIComponent(patient.Numero_urap);
     }
     
@@ -983,6 +985,8 @@ if (isset($_GET['error'])) {
       btnNouvelleVisite.style.opacity = '0.5';
       btnNouvelleVisite.style.cursor = 'not-allowed';
       btnNouvelleVisite.href = '#';
+      
+
       
       togglePreciseField();
     }

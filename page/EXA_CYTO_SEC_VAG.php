@@ -11,6 +11,11 @@ $age = '';
 $id = '';
 $medecin = '';
 
+// Récupérer le nom du médecin prescripteur depuis l'URL si disponible
+if (isset($_GET['medecin'])) {
+    $medecin = htmlspecialchars($_GET['medecin']);
+}
+
 // Traiter le formulaire si soumis
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Récupérer les données du formulaire
@@ -411,19 +416,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="form-grid">
                     <div class="form-field">
                         <label for="id" class="form-label required">N° Identification</label>
-                        <input type="text" id="id" name="id" class="form-input" value="<?php echo htmlspecialchars($id); ?>" required />
+                        <input type="text" id="id" name="id" class="form-input" value="<?php echo htmlspecialchars($id); ?>" required 
+                               placeholder="Entrez le numéro URAP pour auto-remplir" />
                     </div>
                     <div class="form-field">
                         <label for="age" class="form-label required">Âge</label>
-                        <input type="text" id="age" name="age" class="form-input" value="<?php echo htmlspecialchars($age); ?>" required />
+                        <input type="text" id="age" name="age" class="form-input" value="<?php echo htmlspecialchars($age); ?>" required readonly />
                     </div>
                     <div class="form-field">
                         <label for="nom" class="form-label required">Nom</label>
-                        <input type="text" id="nom" name="nom" class="form-input" value="<?php echo htmlspecialchars($nom); ?>" required />
+                        <input type="text" id="nom" name="nom" class="form-input" value="<?php echo htmlspecialchars($nom); ?>" required readonly />
                     </div>
                     <div class="form-field">
                         <label for="prenom" class="form-label required">Prénom</label>
-                        <input type="text" id="prenom" name="prenom" class="form-input" value="<?php echo htmlspecialchars($prenom); ?>" required />
+                        <input type="text" id="prenom" name="prenom" class="form-input" value="<?php echo htmlspecialchars($prenom); ?>" required readonly />
                     </div>
                     <div class="form-field full-width">
                         <label for="medecin" class="form-label required">Médecin prescripteur</label>
@@ -602,5 +608,124 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 </div>
 
+    <script>
+        // Fonction pour rechercher et remplir automatiquement les informations du patient
+        function rechercherPatient(numeroUrap) {
+            if (!numeroUrap) {
+                return;
+            }
+            
+            // Faire la requête AJAX
+            fetch(`get_patient_info.php?urap=${encodeURIComponent(numeroUrap)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remplir automatiquement les champs
+                        document.getElementById('age').value = data.data.age || '';
+                        document.getElementById('nom').value = data.data.nom || '';
+                        document.getElementById('prenom').value = data.data.prenom || '';
+                        
+                        // Afficher un message de succès
+                        showMessage('Patient trouvé et informations remplies automatiquement', 'success');
+                    } else {
+                        // Ne pas afficher d'erreur si c'est juste un champ vide
+                        if (numeroUrap.length > 0) {
+                            showMessage(data.message || 'Patient non trouvé', 'error');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    if (numeroUrap.length > 0) {
+                        showMessage('Erreur lors de la recherche du patient', 'error');
+                    }
+                });
+        }
+        
+        // Fonction pour afficher des messages
+        function showMessage(message, type) {
+            // Supprimer les messages existants
+            const existingMessages = document.querySelectorAll('.message');
+            existingMessages.forEach(msg => msg.remove());
+            
+            // Créer le nouveau message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.cssText = `
+                padding: 12px 16px;
+                margin: 16px 0;
+                border-radius: 8px;
+                font-weight: 500;
+                text-align: center;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            if (type === 'success') {
+                messageDiv.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                messageDiv.style.color = 'white';
+            } else {
+                messageDiv.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                messageDiv.style.color = 'white';
+            }
+            
+            messageDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${message}`;
+            
+            // Insérer le message après le header
+            const header = document.querySelector('.header');
+            header.parentNode.insertBefore(messageDiv, header.nextSibling);
+            
+            // Supprimer le message après 5 secondes
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.style.animation = 'slideOut 0.3s ease-in';
+                    setTimeout(() => messageDiv.remove(), 300);
+                }
+            }, 5000);
+        }
+        
+        // Ajouter les styles CSS pour les animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes slideOut {
+                from { opacity: 1; transform: translateY(0); }
+                to { opacity: 0; transform: translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Auto-remplir si un numéro URAP est passé en paramètre URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urap = urlParams.get('urap');
+            const medecin = urlParams.get('medecin');
+            
+            if (urap) {
+                document.getElementById('id').value = urap;
+                // Déclencher automatiquement la recherche
+                rechercherPatient(urap);
+            }
+            
+            // Remplir automatiquement le nom du médecin prescripteur si disponible
+            if (medecin) {
+                document.getElementById('medecin').value = medecin;
+            }
+        });
+        
+        // Recherche automatique quand l'utilisateur tape dans le champ
+        document.getElementById('id').addEventListener('input', function() {
+            const numeroUrap = this.value.trim();
+            if (numeroUrap.length >= 3) { // Rechercher seulement si au moins 3 caractères
+                // Attendre un peu que l'utilisateur finisse de taper
+                clearTimeout(window.searchTimeout);
+                window.searchTimeout = setTimeout(() => {
+                    rechercherPatient(numeroUrap);
+                }, 500); // Attendre 500ms après que l'utilisateur arrête de taper
+            }
+        });
+    </script>
 </body>
 </html>

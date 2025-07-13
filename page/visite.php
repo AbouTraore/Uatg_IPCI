@@ -6,10 +6,10 @@ require_once("connexion.php"); // Gère la connexion à la base de données (PDO
 
 // Initialiser les variables du formulaire avec des valeurs par défaut
 $message = '';
-$date_visite = '';
+$date_visite = date('Y-m-d'); // Date actuelle par défaut
 $prescripteur = '';
 $structure = '';
-$heure = '';
+$heure = date('H:i'); // Heure actuelle par défaut
 $motif = '';
 $message_type = ''; // 'success' ou 'danger'
 
@@ -216,6 +216,53 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border-radius: 16px;
             padding: 24px;
             border: 1px solid var(--gray-200);
+        }
+        
+        .examens-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .examen-card {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 24px;
+            text-decoration: none;
+            color: var(--gray-800);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+        }
+        
+        .examen-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .examen-card i {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+        
+        .examen-card .examen-title {
+            font-weight: 600;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+        
+        .examen-card:not([style*="opacity: 0.5"]) {
+            cursor: pointer;
+        }
+        
+        .examen-card[style*="opacity: 0.5"] {
+            cursor: not-allowed;
         }
 
         .section-title {
@@ -473,15 +520,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         Types d'Examens
                     </div>
                     <div class="examens-section">
-                        <a href="ecs.php" class="examen-card">
+                        <a href="ecs.php" class="examen-card" id="btnEcs">
                             <i class="fas fa-microscope"></i>
                             <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE DU SPERME</div>
                         </a>
-                        <a href="EXA_CYTO_SEC_VAG.php" class="examen-card">
+                        <a href="EXA_CYTO_SEC_VAG.php" class="examen-card" id="btnSecVag">
                             <i class="fas fa-bacteria"></i>
                             <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE SECRETION VAGINALE</div>
                         </a>
-                        <a href="ecsu.php" class="examen-card">
+                        <a href="ecsu.php" class="examen-card" id="btnEcsu">
                             <i class="fas fa-syringe"></i>
                             <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE SECRETION URETRALE</div>
                         </a>
@@ -512,5 +559,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </form>
         </div>
     </div>
+
+    <script>
+        // Fonction pour mettre à jour les liens vers les examens avec le nom du médecin prescripteur
+        function updateExamLinks() {
+            const prescripteur = document.getElementById('prescripteur').value.trim();
+            
+            if (prescripteur) {
+                // Mettre à jour les liens avec le nom du médecin prescripteur
+                document.getElementById('btnEcs').href = `ecs.php?medecin=${encodeURIComponent(prescripteur)}`;
+                document.getElementById('btnSecVag').href = `EXA_CYTO_SEC_VAG.php?medecin=${encodeURIComponent(prescripteur)}`;
+                document.getElementById('btnEcsu').href = `ecsu.php?medecin=${encodeURIComponent(prescripteur)}`;
+                
+                // Activer les liens
+                document.querySelectorAll('.examen-card').forEach(card => {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                });
+            } else {
+                // Désactiver les liens si pas de médecin prescripteur
+                document.querySelectorAll('.examen-card').forEach(card => {
+                    card.style.opacity = '0.5';
+                    card.style.pointerEvents = 'none';
+                });
+            }
+        }
+        
+        // Écouter les changements dans le champ prescripteur
+        document.getElementById('prescripteur').addEventListener('input', updateExamLinks);
+        
+        // Initialiser les liens au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateExamLinks();
+        });
+    </script>
 </body>
 </html>
