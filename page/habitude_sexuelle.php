@@ -24,6 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("Veuillez remplir tous les champs, y compris le numéro URAP.");
         }
 
+        // Vérifier doublon
+        $check = $pdo->prepare("SELECT COUNT(*) FROM habitude_sexuelles WHERE Numero_urap = ?");
+        $check->execute([$numero_urap]);
+        if ($check->fetchColumn() > 0) {
+            throw new Exception("Un enregistrement existe déjà pour ce patient.");
+        }
+
         // Insertion en base de données
         $sql = "INSERT INTO habitude_sexuelles (Numero_urap, Quel_type_rapport_avez_vous_, Pratiquez_vous__fellation, Avez_vous_changé_partenais_ces_deux_dernier_mois, Utilisez_vous_preservatif) VALUES (?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
@@ -36,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         ]);
 
         if ($result) {
-            $message = 'Habitude sexuelle enregistrée avec succès !';
+            $message = 'Les informations pour le numéro URAP <strong>' . htmlspecialchars($numero_urap) . '</strong> ont bien été enregistrées.';
             $messageType = 'success';
         } else {
             $message = 'Erreur lors de l\'enregistrement de l\'habitude sexuelle.';
@@ -48,10 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Ensure the form action is correct. If you want to process in the same file,
-// the action should be empty or point to itself.
-// original code used "insertagence.php" but the context implies self-processing.
-// I'll set it to process in this file.
+// Gestion des messages de retour
+if (isset($_GET['success'])) {
+    $message = urldecode($_GET['success']);
+    $messageType = 'success';
+} elseif (isset($_GET['error'])) {
+    $message = urldecode($_GET['error']);
+    $messageType = 'error';
+}
+
 $form_action = $_SERVER['PHP_SELF'];
 ?>
 
@@ -227,16 +239,16 @@ $form_action = $_SERVER['PHP_SELF'];
 
         .form-label {
             display: block;
-            font-size: 1rem; /* Increased font size for labels */
-            font-weight: 600; /* Made labels bolder */
+            font-size: 1rem;
+            font-weight: 600;
             color: var(--gray-700);
-            margin-bottom: 12px; /* Increased margin below labels */
+            margin-bottom: 12px;
         }
 
         .radio-group {
             display: flex;
             flex-direction: column;
-            gap: 12px; /* Spacing between radio options */
+            gap: 12px;
         }
 
         .radio-group label {
@@ -246,18 +258,59 @@ $form_action = $_SERVER['PHP_SELF'];
             color: var(--gray-600);
             cursor: pointer;
             transition: color 0.2s;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.02);
+            border: 1px solid transparent;
         }
 
         .radio-group label:hover {
             color: var(--primary-dark);
+            background: rgba(0, 71, 171, 0.05);
+            border-color: rgba(0, 71, 171, 0.1);
         }
 
         .radio-group input[type="radio"] {
-            margin-right: 10px;
+            margin-right: 12px;
             width: 18px;
             height: 18px;
-            accent-color: var(--primary); /* Highlight color for radio buttons */
+            accent-color: var(--primary);
             cursor: pointer;
+        }
+
+        .radio-group input[type="radio"]:checked + span {
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        /* Style spécial pour le champ de saisie texte */
+        .input-text-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            background: white;
+            color: var(--gray-700);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        
+        .input-text-field:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+        }
+        
+        .input-text-field::placeholder {
+            color: var(--gray-400);
+            font-style: italic;
+        }
+        
+        .text-input-wrapper {
+            background: rgba(0,0,0,0.02);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 71, 171, 0.1);
         }
 
         .actions {
@@ -433,30 +486,6 @@ $form_action = $_SERVER['PHP_SELF'];
             }
         }
     </style>
-    <style>
-        .input-urap {
-            padding: 14px 18px;
-            border: 2px solid var(--primary);
-            border-radius: 10px;
-            font-size: 1.15rem;
-            font-weight: 600;
-            background: var(--gray-50);
-            color: var(--primary-dark);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            transition: border 0.2s, box-shadow 0.2s;
-            outline: none;
-        }
-        .input-urap:focus {
-            border: 2px solid var(--accent);
-            box-shadow: 0 4px 12px rgba(16,185,129,0.10);
-            background: #fff;
-        }
-        .form-label[for="numero_urap"] {
-            color: var(--primary-dark);
-            font-size: 1.1rem;
-            letter-spacing: 0.5px;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -479,12 +508,16 @@ $form_action = $_SERVER['PHP_SELF'];
                 <div class="form-section">
                     <h2 class="section-title">
                         <i class="fas fa-id-card"></i>
-                        Numéro URAP
+                        Identification du Patient
                     </h2>
                     <div class="form-grid">
                         <div class="form-field">
-                            <label class="form-label" for="numero_urap">Numéro URAP du patient</label>
-                            <input type="text" name="numero_urap" id="numero_urap" class="input-urap" value="<?php echo isset($_POST['numero_urap']) ? htmlspecialchars($_POST['numero_urap']) : ''; ?>" required />
+                            <label class="form-label">Numéro URAP du patient</label>
+                            <div class="radio-group">
+                                <div class="text-input-wrapper">
+                                    <input type="text" name="numero_urap" id="numero_urap" class="input-text-field" value="<?php echo isset($_POST['numero_urap']) ? htmlspecialchars($_POST['numero_urap']) : ''; ?>" required placeholder="Saisir le numéro URAP du patient..." />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -499,16 +532,20 @@ $form_action = $_SERVER['PHP_SELF'];
                             <label class="form-label">Quel type de rapport avez-vous ?</label>
                             <div class="radio-group">
                                 <label for="hetero">
-                                    <input type="radio" name="Quel_type_rapport_avez_vous" id="hetero" value="Hétérosexuel" <?php echo (isset($_POST['Quel_type_rapport_avez_vous']) && $_POST['Quel_type_rapport_avez_vous'] == 'Hétérosexuel') ? 'checked' : ''; ?> /> Hétérosexuel
+                                    <input type="radio" name="Quel_type_rapport_avez_vous" id="hetero" value="Hétérosexuel" <?php echo (isset($_POST['Quel_type_rapport_avez_vous']) && $_POST['Quel_type_rapport_avez_vous'] == 'Hétérosexuel') ? 'checked' : ''; ?> />
+                                    <span>Hétérosexuel</span>
                                 </label>
                                 <label for="homo">
-                                    <input type="radio" name="Quel_type_rapport_avez_vous" id="homo" value="Homosexuel" <?php echo (isset($_POST['Quel_type_rapport_avez_vous']) && $_POST['Quel_type_rapport_avez_vous'] == 'Homosexuel') ? 'checked' : ''; ?> /> Homosexuel
+                                    <input type="radio" name="Quel_type_rapport_avez_vous" id="homo" value="Homosexuel" <?php echo (isset($_POST['Quel_type_rapport_avez_vous']) && $_POST['Quel_type_rapport_avez_vous'] == 'Homosexuel') ? 'checked' : ''; ?> />
+                                    <span>Homosexuel</span>
                                 </label>
                                 <label for="quelquefois_rapport">
-                                    <input type="radio" name="Quel_type_rapport_avez_vous" id="quelquefois_rapport" value="quelque fois" <?php echo (isset($_POST['Quel_type_rapport_avez_vous']) && $_POST['Quel_type_rapport_avez_vous'] == 'quelque fois') ? 'checked' : ''; ?> /> Quelque fois
+                                    <input type="radio" name="Quel_type_rapport_avez_vous" id="quelquefois_rapport" value="quelque fois" <?php echo (isset($_POST['Quel_type_rapport_avez_vous']) && $_POST['Quel_type_rapport_avez_vous'] == 'quelque fois') ? 'checked' : ''; ?> />
+                                    <span>Quelque fois</span>
                                 </label>
                                 <label for="bi">
-                                    <input type="radio" name="Quel_type_rapport_avez_vous" id="bi" value="Bisexuel" <?php echo (isset($_POST['Quel_type_rapport_avez_vous']) && $_POST['Quel_type_rapport_avez_vous'] == 'Bisexuel') ? 'checked' : ''; ?> /> Bisexuel
+                                    <input type="radio" name="Quel_type_rapport_avez_vous" id="bi" value="Bisexuel" <?php echo (isset($_POST['Quel_type_rapport_avez_vous']) && $_POST['Quel_type_rapport_avez_vous'] == 'Bisexuel') ? 'checked' : ''; ?> />
+                                    <span>Bisexuel</span>
                                 </label>
                             </div>
                         </div>
@@ -527,16 +564,20 @@ $form_action = $_SERVER['PHP_SELF'];
                             <label class="form-label">Pratiquez-vous la fellation ?</label>
                             <div class="radio-group">
                                 <label for="jamais_fellation">
-                                    <input type="radio" name="Pratiquez_vous__fellation" id="jamais_fellation" value="Jamais" <?php echo (isset($_POST['Pratiquez_vous__fellation']) && $_POST['Pratiquez_vous__fellation'] == 'Jamais') ? 'checked' : ''; ?> /> Jamais
+                                    <input type="radio" name="Pratiquez_vous__fellation" id="jamais_fellation" value="Jamais" <?php echo (isset($_POST['Pratiquez_vous__fellation']) && $_POST['Pratiquez_vous__fellation'] == 'Jamais') ? 'checked' : ''; ?> />
+                                    <span>Jamais</span>
                                 </label>
                                 <label for="rarement_fellation">
-                                    <input type="radio" name="Pratiquez_vous__fellation" id="rarement_fellation" value="Rarement" <?php echo (isset($_POST['Pratiquez_vous__fellation']) && $_POST['Pratiquez_vous__fellation'] == 'Rarement') ? 'checked' : ''; ?> /> Rarement
+                                    <input type="radio" name="Pratiquez_vous__fellation" id="rarement_fellation" value="Rarement" <?php echo (isset($_POST['Pratiquez_vous__fellation']) && $_POST['Pratiquez_vous__fellation'] == 'Rarement') ? 'checked' : ''; ?> />
+                                    <span>Rarement</span>
                                 </label>
                                 <label for="quelquefois_fellation">
-                                    <input type="radio" name="Pratiquez_vous__fellation" id="quelquefois_fellation" value="quelque fois" <?php echo (isset($_POST['Pratiquez_vous__fellation']) && $_POST['Pratiquez_vous__fellation'] == 'quelque fois') ? 'checked' : ''; ?> /> Quelque fois
+                                    <input type="radio" name="Pratiquez_vous__fellation" id="quelquefois_fellation" value="quelque fois" <?php echo (isset($_POST['Pratiquez_vous__fellation']) && $_POST['Pratiquez_vous__fellation'] == 'quelque fois') ? 'checked' : ''; ?> />
+                                    <span>Quelque fois</span>
                                 </label>
                                 <label for="toujours_fellation">
-                                    <input type="radio" name="Pratiquez_vous__fellation" id="toujours_fellation" value="Toujours" <?php echo (isset($_POST['Pratiquez_vous__fellation']) && $_POST['Pratiquez_vous__fellation'] == 'Toujours') ? 'checked' : ''; ?> /> Toujours
+                                    <input type="radio" name="Pratiquez_vous__fellation" id="toujours_fellation" value="Toujours" <?php echo (isset($_POST['Pratiquez_vous__fellation']) && $_POST['Pratiquez_vous__fellation'] == 'Toujours') ? 'checked' : ''; ?> />
+                                    <span>Toujours</span>
                                 </label>
                             </div>
                         </div>
@@ -555,10 +596,12 @@ $form_action = $_SERVER['PHP_SELF'];
                             <label class="form-label">Avez-vous changé de partenaire ces (2) derniers mois ?</label>
                             <div class="radio-group">
                                 <label for="oui_partenaire">
-                                    <input type="radio" name="Avez_vous_changé_partenais_ces_deux_dernier_mois" id="oui_partenaire" value="oui" <?php echo (isset($_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois']) && $_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois'] == 'oui') ? 'checked' : ''; ?> /> Oui
+                                    <input type="radio" name="Avez_vous_changé_partenais_ces_deux_dernier_mois" id="oui_partenaire" value="oui" <?php echo (isset($_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois']) && $_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois'] == 'oui') ? 'checked' : ''; ?> />
+                                    <span>Oui</span>
                                 </label>
                                 <label for="non_partenaire">
-                                    <input type="radio" name="Avez_vous_changé_partenais_ces_deux_dernier_mois" id="non_partenaire" value="Non" <?php echo (isset($_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois']) && $_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois'] == 'Non') ? 'checked' : ''; ?> /> Non
+                                    <input type="radio" name="Avez_vous_changé_partenais_ces_deux_dernier_mois" id="non_partenaire" value="Non" <?php echo (isset($_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois']) && $_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois'] == 'Non') ? 'checked' : ''; ?> />
+                                    <span>Non</span>
                                 </label>
                             </div>
                         </div>
@@ -577,16 +620,20 @@ $form_action = $_SERVER['PHP_SELF'];
                             <label class="form-label">Utilisez-vous un préservatif ?</label>
                             <div class="radio-group">
                                 <label for="jamais_preservatif">
-                                    <input type="radio" name="Utilisez_vous_preservatif" id="jamais_preservatif" value="Jamais" <?php echo (isset($_POST['Utilisez_vous_preservatif']) && $_POST['Utilisez_vous_preservatif'] == 'Jamais') ? 'checked' : ''; ?> /> Jamais
+                                    <input type="radio" name="Utilisez_vous_preservatif" id="jamais_preservatif" value="Jamais" <?php echo (isset($_POST['Utilisez_vous_preservatif']) && $_POST['Utilisez_vous_preservatif'] == 'Jamais') ? 'checked' : ''; ?> />
+                                    <span>Jamais</span>
                                 </label>
                                 <label for="rarement_preservatif">
-                                    <input type="radio" name="Utilisez_vous_preservatif" id="rarement_preservatif" value="Rarement" <?php echo (isset($_POST['Utilisez_vous_preservatif']) && $_POST['Utilisez_vous_preservatif'] == 'Rarement') ? 'checked' : ''; ?> /> Rarement
+                                    <input type="radio" name="Utilisez_vous_preservatif" id="rarement_preservatif" value="Rarement" <?php echo (isset($_POST['Utilisez_vous_preservatif']) && $_POST['Utilisez_vous_preservatif'] == 'Rarement') ? 'checked' : ''; ?> />
+                                    <span>Rarement</span>
                                 </label>
                                 <label for="quelquefois_preservatif">
-                                    <input type="radio" name="Utilisez_vous_preservatif" id="quelquefois_preservatif" value="quelque fois" <?php echo (isset($_POST['Utilisez_vous_preservatif']) && $_POST['Utilisez_vous_preservatif'] == 'quelque fois') ? 'checked' : ''; ?> /> Quelque fois
+                                    <input type="radio" name="Utilisez_vous_preservatif" id="quelquefois_preservatif" value="quelque fois" <?php echo (isset($_POST['Utilisez_vous_preservatif']) && $_POST['Utilisez_vous_preservatif'] == 'quelque fois') ? 'checked' : ''; ?> />
+                                    <span>Quelque fois</span>
                                 </label>
                                 <label for="toujours_preservatif">
-                                    <input type="radio" name="Utilisez_vous_preservatif" id="toujours_preservatif" value="Toujours" <?php echo (isset($_POST['Utilisez_vous_preservatif']) && $_POST['Utilisez_vous_preservatif'] == 'Toujours') ? 'checked' : ''; ?> /> Toujours
+                                    <input type="radio" name="Utilisez_vous_preservatif" id="toujours_preservatif" value="Toujours" <?php echo (isset($_POST['Utilisez_vous_preservatif']) && $_POST['Utilisez_vous_preservatif'] == 'Toujours') ? 'checked' : ''; ?> />
+                                    <span>Toujours</span>
                                 </label>
                             </div>
                         </div>
@@ -594,9 +641,9 @@ $form_action = $_SERVER['PHP_SELF'];
                 </div>
 
                 <div class="actions">
-                    <button type="button" class="btn btn-danger" onclick="resetForm()">
-                        <i class="fas fa-times"></i>
-                        Annuler
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        <i class="fas fa-undo"></i>
+                        Réinitialiser
                     </button>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save"></i>
@@ -609,7 +656,9 @@ $form_action = $_SERVER['PHP_SELF'];
 
     <script>
         function resetForm() {
-            document.getElementById('sexualHabitForm').reset();
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser le formulaire ?')) {
+                document.getElementById('sexualHabitForm').reset();
+            }
         }
 
         // Animation d'apparition des éléments
@@ -627,17 +676,32 @@ $form_action = $_SERVER['PHP_SELF'];
 
             // Gestion de la soumission du formulaire
             document.getElementById('sexualHabitForm').addEventListener('submit', function(e) {
+                // Validation côté client
+                const numeroUrap = document.getElementById('numero_urap').value.trim();
+                if (!numeroUrap) {
+                    e.preventDefault();
+                    alert('Veuillez saisir le numéro URAP du patient.');
+                    return;
+                }
+                
                 // Animation de chargement
                 const submitBtn = this.querySelector('button[type="submit"]');
                 const originalContent = submitBtn.innerHTML;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
                 submitBtn.disabled = true;
-
-                // You might want to add client-side validation here if needed.
-                // For radio buttons, one option is always selected by default if 'checked' is used,
-                // so explicit validation might only be needed if the user can somehow unselect all.
             });
+
+            // Effacer le message de succès après 5 secondes
+            <?php if ($messageType === 'success'): ?>
+                setTimeout(() => {
+                    const alertDiv = document.querySelector('.alert-success');
+                    if (alertDiv) {
+                        alertDiv.style.opacity = '0';
+                        setTimeout(() => alertDiv.remove(), 300);
+                    }
+                }, 5000);
+            <?php endif; ?>
         });
     </script>
 </body>
-</html> 
+</html>
