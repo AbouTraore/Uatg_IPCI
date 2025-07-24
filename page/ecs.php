@@ -46,7 +46,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $id, $age, $nom, $prenom, $medecin, $couleur, $nombre_leucocyte,
             $spermatozoide, $mobilite, $parasite, $cristaux, $culture, $especes_bacteriennes, $titre, $compte_rendu
         ]);
-        $erreur = "Enregistrement effectué avec succès !";
+        // Redirection JS après succès (pour éviter les problèmes d'en-tête déjà envoyés)
+        echo '<script>window.location.href = "echantillon_male.php?urap=' . urlencode($id) . '";</script>';
+        echo '<noscript><meta http-equiv="refresh" content="0;url=echantillon_male.php?urap=' . urlencode($id) . '"></noscript>';
+        exit();
     }
 }
 ?>
@@ -371,7 +374,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <div class="content-area">
             <?php if (!empty($erreur)): ?>
-                <div class="error-message">
+                <div class="error-message" style="<?php echo ($erreur === 'Enregistrement effectué avec succès !') ? 'background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white;' : ''; ?>">
                     <i class="fas fa-exclamation-triangle"></i>
                     <?php echo $erreur; ?>
                 </div>

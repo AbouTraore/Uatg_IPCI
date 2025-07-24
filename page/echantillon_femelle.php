@@ -22,9 +22,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$type_echantillon, $date_prelevement, $technicien]);
 
-        // Redirection après insertion pour éviter la resoumission du formulaire
-        header("Location: echantillon_unique.php?success=1");
-        exit();
+        // Redirection vers la page de visite du patient après validation
+        header('Location: visite_patient.php?urap=' . urlencode($numero_urap));
+        exit;
 
     } catch (PDOException $e) {
         // Gérer les erreurs d'insertion
