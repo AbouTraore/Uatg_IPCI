@@ -1,61 +1,110 @@
 <?php
-// On inclut les fichiers de configuration nécessaires
-// Assurez-vous que ces fichiers existent et sont correctement configurés
-require_once("identifier.php"); // Gère probablement l'authentification et les sessions
-require_once("connexion.php"); // Gère la connexion à la base de données (PDO)
+require_once("identifier.php");
+require_once("connexion.php");
 
-// Initialiser les variables du formulaire avec des valeurs par défaut
+// Initialiser les variables
 $message = '';
-$date_visite = date('Y-m-d'); // Date actuelle par défaut
-$prescripteur = '';
-$structure = '';
-$heure = date('H:i'); // Heure actuelle par défaut
-$motif = '';
-$message_type = ''; // 'success' ou 'danger'
+$message_type = '';
+$numero_urap = $_GET['idU'] ?? $_GET['urap'] ?? '';
 
-// Traiter le formulaire si soumis via la méthode POST
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Récupérer et sécuriser les données du formulaire
+// Récupérer les informations du patient si URAP fourni
+$patient = null;
+if ($numero_urap) {
+    $stmt = $pdo->prepare("SELECT * FROM patient WHERE Numero_urap = ?");
+    $stmt->execute([$numero_urap]);
+    $patient = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+// Traitement AJAX pour enregistrer la visite et rediriger vers l'examen
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'save_and_redirect') {
+    
+    // Récupérer les données
+    $numero_urap = htmlspecialchars($_POST['numero_urap'] ?? '');
     $date_visite = htmlspecialchars($_POST['date'] ?? '');
-    $prescripteur = htmlspecialchars($_POST['prescripteur'] ?? '');
-    $structure = htmlspecialchars($_POST['structure'] ?? '');
-    $heure = htmlspecialchars($_POST['heure'] ?? '');
-    $motif = htmlspecialchars($_POST['motif'] ?? '');
-
-    // Validation simple des champs requis
-    if (empty($date_visite) || empty($prescripteur) || empty($structure) || empty($heure) || empty($motif)) {
-        $message = "Tous les champs du formulaire de visite sont obligatoires. Veuillez remplir le formulaire.";
-        $message_type = 'danger';
-    } else {
-        try {
-            // Préparer la requête d'insertion des données
-            // Les ? sont des "placeholders" pour les requêtes préparées
-            $sql = "INSERT INTO visite (date, prescripteur, structure, heure, motif) VALUES (?, ?, ?, ?, ?)";
-            
-            // Préparer le statement
-            $stmt = $pdo->prepare($sql);
-            
-            // Exécuter la requête avec les données du formulaire
-            // L'ordre des valeurs dans le tableau doit correspondre à l'ordre des ? dans la requête
-            $stmt->execute([$date_visite, $prescripteur, $structure, $heure, $motif]);
-            
-            // Message de succès après insertion
-            $message = "Le formulaire de visite a été enregistré avec succès !";
-            $message_type = 'success';
-            
-            // Réinitialiser les variables pour vider le formulaire après un succès
-            $date_visite = '';
-            $prescripteur = '';
-            $structure = '';
-            $heure = '';
-            $motif = '';
-
-        } catch (PDOException $e) {
-            // Gérer les erreurs de base de données
-            $message = "Une erreur est survenue lors de l'enregistrement : " . $e->getMessage();
-            $message_type = 'danger';
-        }
+    $heure_visite = htmlspecialchars($_POST['heure'] ?? '');
+    $motif_visite = htmlspecialchars($_POST['motif'] ?? '');
+    $structure_provenance = htmlspecialchars($_POST['structure'] ?? '');
+    $prescripteur_nom = htmlspecialchars($_POST['prescripteur'] ?? '');
+    $type_examen = htmlspecialchars($_POST['type_examen'] ?? '');
+    
+    // Validation
+    if (empty($numero_urap) || empty($date_visite) || empty($heure_visite) || empty($motif_visite)) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Tous les champs obligatoires doivent être remplis.'
+        ]);
+        exit;
     }
+    
+    try {
+        $pdo->beginTransaction();
+        
+        // 1. Enregistrer ou récupérer le prescripteur
+        $id_prescripteur = null;
+        if (!empty($prescripteur_nom)) {
+            // Vérifier si le prescripteur existe déjà
+            $stmt = $pdo->prepare("SELECT ID_prescripteur FROM prescriteur WHERE Nom = ? OR CONCAT(Nom, ' ', Prenom) = ?");
+            $stmt->execute([$prescripteur_nom, $prescripteur_nom]);
+            $prescripteur_existant = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($prescripteur_existant) {
+                $id_prescripteur = $prescripteur_existant['ID_prescripteur'];
+            } else {
+                // Créer un nouveau prescripteur
+                $parts = explode(' ', $prescripteur_nom, 2);
+                $nom = $parts[0];
+                $prenom = isset($parts[1]) ? $parts[1] : '';
+                
+                $stmt = $pdo->prepare("INSERT INTO prescriteur (Nom, Prenom, Structure_provenance) VALUES (?, ?, ?)");
+                $stmt->execute([$nom, $prenom, $structure_provenance]);
+                $id_prescripteur = $pdo->lastInsertId();
+            }
+        }
+        
+        // 2. Générer un nouvel ID de visite
+        $stmt = $pdo->prepare("SELECT MAX(id_visite) as max_id FROM visite");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $nouvel_id_visite = ($result['max_id'] ?? 0) + 1;
+        
+        // 3. Enregistrer la visite
+        $stmt = $pdo->prepare("INSERT INTO visite (id_visite, `date_visite`, `Heure visite`, `Motif visite`, Numero_urap, ID_prescripteur, Structure_provenance) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([
+            $nouvel_id_visite,
+            $date_visite,
+            $heure_visite,
+            $motif_visite,
+            $numero_urap,
+            $id_prescripteur,
+            $structure_provenance
+        ]);
+        
+        $pdo->commit();
+        
+        // 4. Déterminer l'URL de redirection selon le type d'examen
+        $redirect_urls = [
+            'ecs' => "ecs.php?numero_urap=$numero_urap&id_visite=$nouvel_id_visite&medecin=" . urlencode($prescripteur_nom),
+            'vag' => "EXA_CYTO_SEC_VAG.php?numero_urap=$numero_urap&id_visite=$nouvel_id_visite&medecin=" . urlencode($prescripteur_nom),
+            'ecsu' => "ecsu.php?numero_urap=$numero_urap&id_visite=$nouvel_id_visite&medecin=" . urlencode($prescripteur_nom)
+        ];
+        
+        $redirect_url = $redirect_urls[$type_examen] ?? '#';
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Visite enregistrée avec succès !',
+            'redirect_url' => $redirect_url,
+            'id_visite' => $nouvel_id_visite
+        ]);
+        
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        echo json_encode([
+            'success' => false,
+            'message' => 'Erreur lors de l\'enregistrement : ' . $e->getMessage()
+        ]);
+    }
+    exit;
 }
 ?>
 
@@ -64,7 +113,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Formulaire Visite</title>
+    <title>Nouvelle Visite - UATG</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -199,6 +248,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             animation: shake 0.5s ease-in-out;
         }
 
+        .alert-info {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
@@ -210,59 +263,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             75% { transform: translateX(5px); }
         }
 
+        .patient-info {
+            background: var(--gray-50);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .patient-details {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .patient-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .patient-name {
+            flex: 1;
+        }
+
+        .patient-name h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .patient-meta {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
         .form-section {
             margin-bottom: 32px;
             background: var(--gray-50);
             border-radius: 16px;
             padding: 24px;
             border: 1px solid var(--gray-200);
-        }
-        
-        .examens-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .examen-card {
-            background: white;
-            border: 2px solid var(--gray-200);
-            border-radius: 12px;
-            padding: 24px;
-            text-decoration: none;
-            color: var(--gray-800);
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 16px;
-        }
-        
-        .examen-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .examen-card i {
-            font-size: 2.5rem;
-            color: var(--primary);
-        }
-        
-        .examen-card .examen-title {
-            font-weight: 600;
-            font-size: 1rem;
-            line-height: 1.4;
-        }
-        
-        .examen-card:not([style*="opacity: 0.5"]) {
-            cursor: pointer;
-        }
-        
-        .examen-card[style*="opacity: 0.5"] {
-            cursor: not-allowed;
         }
 
         .section-title {
@@ -317,36 +366,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
         }
 
+        .form-input:disabled {
+            background: var(--gray-100);
+            color: var(--gray-500);
+        }
+
         .full-width {
             grid-column: 1 / -1;
         }
-        
+
         .examens-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
+            margin-top: 20px;
         }
         
         .examen-card {
             background-color: white;
-            border: 1px solid var(--gray-200);
+            border: 2px solid var(--gray-200);
             border-radius: 16px;
             padding: 24px;
             text-align: center;
             box-shadow: var(--shadow-sm);
             transition: all 0.3s ease;
-            text-decoration: none;
-            color: var(--gray-800);
+            cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
+            position: relative;
         }
         
-        .examen-card:hover {
+        .examen-card:hover:not(.disabled) {
             transform: translateY(-5px) scale(1.02);
             box-shadow: var(--shadow-md);
             border-color: var(--primary-light);
+        }
+        
+        .examen-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         .examen-card i {
@@ -355,7 +415,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             transition: color 0.3s ease;
         }
         
-        .examen-card:hover i {
+        .examen-card:hover:not(.disabled) i {
             color: var(--primary-light);
         }
         
@@ -363,26 +423,66 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-weight: 600;
             font-size: 1em;
             letter-spacing: -0.02em;
+            color: var(--gray-800);
         }
 
-        .buttons-container {
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
-            flex-direction: column;
-            gap: 20px;
-            margin-top: 32px;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
             justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--gray-200);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .actions-bar {
+            background: var(--gray-50);
+            padding: 20px 32px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            border-top: 1px solid var(--gray-200);
         }
 
         .btn {
-            padding: 14px 28px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 12px;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -391,43 +491,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            min-width: 120px;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            color: white;
-            box-shadow: var(--shadow);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
         }
 
         .btn-secondary {
             background: white;
             color: var(--gray-700);
-            border: 2px solid var(--gray-200);
+            border: 1px solid var(--gray-300);
         }
 
         .btn-secondary:hover {
-            background: var(--gray-50);
-            border-color: var(--gray-300);
-            transform: translateY(-1px);
-        }
-        
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-            box-shadow: var(--shadow);
-        }
-        
-        .btn-danger:hover {
-            background: #d42d2d;
             transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
         @media (max-width: 768px) {
@@ -451,40 +525,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 grid-template-columns: 1fr;
             }
 
-            .buttons-container {
-                gap: 16px;
-            }
-            
-            .btn-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
             .form-section {
                 padding: 16px;
+            }
+
+            .examens-section {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Enregistrement de la visite...</p>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-calendar-check"></i> Formulaire de Visite</h1>
-            <p>Enregistrez les informations d'une nouvelle visite de patient</p>
+            <h1><i class="fas fa-calendar-plus"></i> Nouvelle Visite</h1>
+            <p>Enregistrez une nouvelle visite et choisissez le type d'examen</p>
         </div>
         
         <div class="content-area">
-            <?php if (!empty($message)): ?>
-                <div class="alert alert-<?php echo $message_type; ?>">
-                    <i class="fas fa-<?php echo ($message_type == 'success' ? 'check-circle' : 'exclamation-triangle'); ?>"></i>
-                    <?php echo $message; ?>
+            <?php if (!$numero_urap): ?>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Aucun numéro URAP fourni. Veuillez sélectionner un patient.
                 </div>
             <?php endif; ?>
 
-            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+            <?php if ($patient): ?>
+                <div class="patient-info">
+                    <div class="patient-details">
+                        <div class="patient-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="patient-name">
+                            <h3><?= htmlspecialchars($patient['Nom_patient'] . ' ' . $patient['Prenom_patient']) ?></h3>
+                            <div class="patient-meta">
+                                N°URAP: <?= htmlspecialchars($patient['Numero_urap']) ?> | 
+                                <?= htmlspecialchars($patient['Age']) ?> ans | 
+                                <?= htmlspecialchars($patient['Sexe_patient']) ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <form id="visiteForm">
+                <input type="hidden" id="numero_urap" name="numero_urap" value="<?= htmlspecialchars($numero_urap) ?>">
+                
                 <div class="form-section">
                     <div class="section-title">
                         <i class="fas fa-info-circle"></i>
@@ -493,23 +586,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="form-grid">
                         <div class="form-field">
                             <label for="date" class="form-label required">Date</label>
-                            <input type="date" id="date" name="date" class="form-input" value="<?php echo htmlspecialchars($date_visite); ?>" required />
+                            <input type="date" id="date" name="date" class="form-input" value="<?= date('Y-m-d') ?>" required />
                         </div>
                         <div class="form-field">
                             <label for="heure" class="form-label required">Heure</label>
-                            <input type="time" id="heure" name="heure" class="form-input" value="<?php echo htmlspecialchars($heure); ?>" required />
+                            <input type="time" id="heure" name="heure" class="form-input" value="<?= date('H:i') ?>" required />
                         </div>
                         <div class="form-field">
                             <label for="prescripteur" class="form-label required">Prescripteur</label>
-                            <input type="text" id="prescripteur" name="prescripteur" class="form-input" value="<?php echo htmlspecialchars($prescripteur); ?>" placeholder="Nom du prescripteur" required />
+                            <input type="text" id="prescripteur" name="prescripteur" class="form-input" placeholder="Nom du médecin prescripteur" required />
                         </div>
                         <div class="form-field">
-                            <label for="structure" class="form-label required">Structure de provenance</label>
-                            <input type="text" id="structure" name="structure" class="form-input" value="<?php echo htmlspecialchars($structure); ?>" placeholder="Nom de la structure" required />
+                            <label for="structure" class="form-label">Structure de provenance</label>
+                            <input type="text" id="structure" name="structure" class="form-input" placeholder="Nom de la structure" />
                         </div>
                         <div class="form-field full-width">
                             <label for="motif" class="form-label required">Motif de la visite</label>
-                            <input type="text" id="motif" name="motif" class="form-input" value="<?php echo htmlspecialchars($motif); ?>" placeholder="Ex: Consultation, contrôle, etc." required />
+                            <input type="text" id="motif" name="motif" class="form-input" placeholder="Ex: Consultation, contrôle, dépistage..." required />
                         </div>
                     </div>
                 </div>
@@ -517,80 +610,126 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="form-section">
                     <div class="section-title">
                         <i class="fas fa-vial"></i>
-                        Types d'Examens
+                        Choisir le Type d'Examen
                     </div>
+                    <p style="color: var(--gray-600); margin-bottom: 20px; font-size: 0.9rem;">
+                        <i class="fas fa-info-circle"></i> 
+                        Remplissez d'abord les informations de visite, puis cliquez sur le type d'examen souhaité.
+                    </p>
                     <div class="examens-section">
-                        <a href="ecs.php" class="examen-card" id="btnEcs">
+                        <div class="examen-card disabled" data-type="ecs">
                             <i class="fas fa-microscope"></i>
-                            <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE DU SPERME</div>
-                        </a>
-                        <a href="EXA_CYTO_SEC_VAG.php" class="examen-card" id="btnSecVag">
+                            <div class="examen-title">EXAMEN CYTOBACTÉRIOLOGIQUE DU SPERME</div>
+                        </div>
+                        <div class="examen-card disabled" data-type="vag">
                             <i class="fas fa-bacteria"></i>
-                            <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE SECRETION VAGINALE</div>
-                        </a>
-                        <a href="ecsu.php" class="examen-card" id="btnEcsu">
+                            <div class="examen-title">EXAMEN CYTOBACTÉRIOLOGIQUE SÉCRÉTION VAGINALE</div>
+                        </div>
+                        <div class="examen-card disabled" data-type="ecsu">
                             <i class="fas fa-syringe"></i>
-                            <div class="examen-title">EXAMEN CYTOBACTERIOLOGIQUE SECRETION URETRALE</div>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="buttons-container">
-                    <div class="btn-group">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Enregistrer
-                        </button>
-                        <a href="echantillons.php" class="btn btn-secondary">
-                            <i class="fas fa-flask"></i> Échantillons
-                        </a>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-secondary">
-                            <i class="fas fa-file-pdf"></i> Rapport
-                        </button>
-                        <button type="button" class="btn btn-secondary">
-                            <i class="fas fa-print"></i> Imprimer
-                        </button>
-                        <a href="javascript:history.back()" class="btn btn-danger">
-                            <i class="fas fa-arrow-left"></i> Retour
-                        </a>
+                            <div class="examen-title">EXAMEN CYTOBACTÉRIOLOGIQUE SÉCRÉTION URÉTRALE</div>
+                        </div>
                     </div>
                 </div>
             </form>
         </div>
+
+        <div class="actions-bar">
+            <a href="liste_dossiers.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
     </div>
 
     <script>
-        // Fonction pour mettre à jour les liens vers les examens avec le nom du médecin prescripteur
-        function updateExamLinks() {
-            const prescripteur = document.getElementById('prescripteur').value.trim();
+        // Validation du formulaire et activation des examens
+        function validateForm() {
+            const requiredFields = ['numero_urap', 'date', 'heure', 'prescripteur', 'motif'];
+            let isValid = true;
             
-            if (prescripteur) {
-                // Mettre à jour les liens avec le nom du médecin prescripteur
-                document.getElementById('btnEcs').href = `ecs.php?medecin=${encodeURIComponent(prescripteur)}`;
-                document.getElementById('btnSecVag').href = `EXA_CYTO_SEC_VAG.php?medecin=${encodeURIComponent(prescripteur)}`;
-                document.getElementById('btnEcsu').href = `ecsu.php?medecin=${encodeURIComponent(prescripteur)}`;
-                
-                // Activer les liens
-                document.querySelectorAll('.examen-card').forEach(card => {
-                    card.style.opacity = '1';
-                    card.style.pointerEvents = 'auto';
+            requiredFields.forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (!field.value.trim()) {
+                    isValid = false;
+                }
+            });
+            
+            // Activer/désactiver les cartes d'examen
+            const examCards = document.querySelectorAll('.examen-card');
+            examCards.forEach(card => {
+                if (isValid) {
+                    card.classList.remove('disabled');
+                } else {
+                    card.classList.add('disabled');
+                }
+            });
+            
+            return isValid;
+        }
+
+        // Fonction pour enregistrer la visite et rediriger
+        async function saveVisitAndRedirect(typeExamen) {
+            if (!validateForm()) {
+                alert('Veuillez remplir tous les champs obligatoires avant de choisir un examen.');
+                return;
+            }
+
+            // Afficher le loading
+            document.getElementById('loadingOverlay').classList.add('show');
+
+            const formData = new FormData();
+            formData.append('action', 'save_and_redirect');
+            formData.append('numero_urap', document.getElementById('numero_urap').value);
+            formData.append('date', document.getElementById('date').value);
+            formData.append('heure', document.getElementById('heure').value);
+            formData.append('prescripteur', document.getElementById('prescripteur').value);
+            formData.append('structure', document.getElementById('structure').value);
+            formData.append('motif', document.getElementById('motif').value);
+            formData.append('type_examen', typeExamen);
+
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
                 });
-            } else {
-                // Désactiver les liens si pas de médecin prescripteur
-                document.querySelectorAll('.examen-card').forEach(card => {
-                    card.style.opacity = '0.5';
-                    card.style.pointerEvents = 'none';
-                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Rediriger vers la page d'examen
+                    window.location.href = result.redirect_url;
+                } else {
+                    document.getElementById('loadingOverlay').classList.remove('show');
+                    alert('Erreur: ' + result.message);
+                }
+            } catch (error) {
+                document.getElementById('loadingOverlay').classList.remove('show');
+                alert('Erreur de communication avec le serveur.');
+                console.error('Erreur:', error);
             }
         }
-        
-        // Écouter les changements dans le champ prescripteur
-        document.getElementById('prescripteur').addEventListener('input', updateExamLinks);
-        
-        // Initialiser les liens au chargement de la page
+
+        // Écouter les changements dans les champs du formulaire
         document.addEventListener('DOMContentLoaded', function() {
-            updateExamLinks();
+            const formInputs = document.querySelectorAll('.form-input');
+            formInputs.forEach(input => {
+                input.addEventListener('input', validateForm);
+                input.addEventListener('change', validateForm);
+            });
+
+            // Gérer les clics sur les cartes d'examen
+            const examCards = document.querySelectorAll('.examen-card');
+            examCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    if (!this.classList.contains('disabled')) {
+                        const typeExamen = this.getAttribute('data-type');
+                        saveVisitAndRedirect(typeExamen);
+                    }
+                });
+            });
+
+            // Validation initiale
+            validateForm();
         });
     </script>
 </body>
