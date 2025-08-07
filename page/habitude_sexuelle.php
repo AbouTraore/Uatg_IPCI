@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $numero_urap = htmlspecialchars(trim($_POST['numero_urap'] ?? ''));
         $type_rapport = htmlspecialchars($_POST['Quel_type_rapport_avez_vous'] ?? '');
         $pratique_fellation = htmlspecialchars($_POST['Pratiquez_vous__fellation'] ?? '');
+        $Pratique_Cunilingus = htmlspecialchars($_POST['PPratiquez_vous_cunilingus'] ?? '');
         $change_partenaire = htmlspecialchars($_POST['Avez_vous_changé_partenais_ces_deux_dernier_mois'] ?? '');
         $utilise_preservatif = htmlspecialchars($_POST['Utilisez_vous_preservatif'] ?? '');
 
@@ -32,14 +33,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Insertion en base de données
-        $sql = "INSERT INTO habitude_sexuelles (Numero_urap, Quel_type_rapport_avez_vous_, Pratiquez_vous__fellation, Avez_vous_changé_partenais_ces_deux_dernier_mois, Utilisez_vous_preservatif) VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO habitude_sexuelles (Numero_urap, Quel_type_rapport_avez_vous, Pratiquez_vous__fellation, Avez_vous_changé_partenais_ces_deux_dernier_mois, Utilisez_vous_preservatif, Pratiquez_vous_cunilingus) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         $result = $stmt->execute([
             $numero_urap,
             $type_rapport,
             $pratique_fellation,
             $change_partenaire,
-            $utilise_preservatif
+            $utilise_preservatif,
+            $Pratique_Cunilingus
         ]);
 
         if ($result) {
@@ -596,19 +598,19 @@ $form_action = $_SERVER['PHP_SELF'];
                             <label class="form-label">Pratiquez-vous le cunilingus&nbsp;?</label>
                             <div class="radio-group">
                                 <label for="jamais_cunilingus">
-                                    <input type="radio" name="Pratiquez_vous__cunilingus" id="jamais_cunilingus" value="Jamais" <?php echo (isset($_POST['Pratiquez_vous__cunilingus']) && $_POST['Pratiquez_vous__cunilingus'] == 'Jamais') ? 'checked' : ''; ?> />
+                                    <input type="radio" name="Pratiquez_vous_cunilingus" id="jamais_cunilingus" value="Jamais" <?php echo (isset($_POST['Pratiquez_vous__cunilingus']) && $_POST['Pratiquez_vous__cunilingus'] == 'Jamais') ? 'checked' : ''; ?> />
                                     <span>Jamais</span>
                                 </label>
                                 <label for="rarement_cunilingus">
-                                    <input type="radio" name="Pratiquez_vous__cunilingus" id="rarement_cunilingus" value="Rarement" <?php echo (isset($_POST['Pratiquez_vous__cunilingus']) && $_POST['Pratiquez_vous__cunilingus'] == 'Rarement') ? 'checked' : ''; ?> />
+                                    <input type="radio" name="Pratiquez_vous_cunilingus" id="rarement_cunilingus" value="Rarement" <?php echo (isset($_POST['Pratiquez_vous__cunilingus']) && $_POST['Pratiquez_vous__cunilingus'] == 'Rarement') ? 'checked' : ''; ?> />
                                     <span>Rarement</span>
                                 </label>
                                 <label for="quelquefois_cunilingus">
-                                    <input type="radio" name="Pratiquez_vous__cunilingus" id="quelquefois_cunilingus" value="quelque fois" <?php echo (isset($_POST['Pratiquez_vous__cunilingus']) && $_POST['Pratiquez_vous__cunilingus'] == 'quelque fois') ? 'checked' : ''; ?> />
+                                    <input type="radio" name="Pratiquez_vous_cunilingus" id="quelquefois_cunilingus" value="quelque fois" <?php echo (isset($_POST['Pratiquez_vous__cunilingus']) && $_POST['Pratiquez_vous__cunilingus'] == 'quelque fois') ? 'checked' : ''; ?> />
                                     <span>Quelque fois</span>
                                 </label>
                                 <label for="toujours_cunilingus">
-                                    <input type="radio" name="Pratiquez_vous__cunilingus" id="toujours_cunilingus" value="Toujours" <?php echo (isset($_POST['Pratiquez_vous__cunilingus']) && $_POST['Pratiquez_vous__cunilingus'] == 'Toujours') ? 'checked' : ''; ?> />
+                                    <input type="radio" name="Pratiquez_vous_cunilingus" id="toujours_cunilingus" value="Toujours" <?php echo (isset($_POST['Pratiquez_vous__cunilingus']) && $_POST['Pratiquez_vous__cunilingus'] == 'Toujours') ? 'checked' : ''; ?> />
                                     <span>Toujours</span>
                                 </label>
                             </div>

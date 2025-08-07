@@ -4,15 +4,43 @@ require_once("connexion.php");
 
 // Récupération des paramètres de recherche/filtre
 $search = $_GET['search'] ?? '';
-$date_debut = $_GET['date_debut'] ?? '';
-$date_fin = $_GET['date_fin'] ?? '';
 $sexe_filter = $_GET['sexe'] ?? '';
 
-// Construction de la requête de base
-$sql = "SELECT DISTINCT p.*, v.id_visite, v.`Date visite`, v.`Heure visite`, v.`Motif visite`, v.Structure_provenance
-        FROM patient p 
-        LEFT JOIN visite v ON p.Numero_urap = v.Numero_urap 
-        WHERE 1=1";
+// D'abord, vérifier si la table visite a des données et quelles colonnes elle a
+try {
+    // Test simple pour voir si la table visite existe et a des colonnes
+    $test_stmt = $pdo->prepare("SHOW COLUMNS FROM visite");
+    $test_stmt->execute();
+    $columns = $test_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Vérifier si la table visite a des données
+    $count_stmt = $pdo->prepare("SELECT COUNT(*) as total FROM visite");
+    $count_stmt->execute();
+    $visite_count = $count_stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Si la table visite est vide ou problématique, utiliser une requête simple
+    if ($visite_count == 0) {
+        // Requête simple sans jointure sur visite puisque la table est vide
+        $sql = "SELECT p.*, 0 as nb_visites, NULL as derniere_visite
+                FROM patient p 
+                WHERE 1=1";
+    } else {
+        // Requête normale avec jointure
+        $sql = "SELECT p.*, 
+                       COALESCE(COUNT(v.id_visite), 0) as nb_visites, 
+                       MAX(v.`Date visite`) as derniere_visite
+                FROM patient p 
+                LEFT JOIN visite v ON p.Numero_urap = v.Numero_urap 
+                WHERE 1=1";
+    }
+    
+} catch (PDOException $e) {
+    // En cas d'erreur, utiliser une requête simple sans visite
+    $sql = "SELECT p.*, 0 as nb_visites, NULL as derniere_visite
+            FROM patient p 
+            WHERE 1=1";
+    $visite_count = 0;
+}
 
 $params = [];
 
@@ -25,67 +53,36 @@ if ($search) {
     $params[] = $searchParam;
 }
 
-if ($date_debut) {
-    $sql .= " AND v.`Date visite` >= ?";
-    $params[] = $date_debut;
-}
-
-if ($date_fin) {
-    $sql .= " AND v.`Date visite` <= ?";
-    $params[] = $date_fin;
-}
-
 if ($sexe_filter) {
     $sql .= " AND p.Sexe_patient = ?";
     $params[] = $sexe_filter;
 }
 
-// CORRECTION : Utiliser le bon nom de colonne avec backticks
-$sql .= " ORDER BY p.Nom_patient, p.Prenom_patient, p.`date_visite` DESC";
+// Ajouter GROUP BY seulement si on a fait une jointure
+if ($visite_count > 0) {
+    $sql .= " GROUP BY p.Numero_urap";
+}
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$sql .= " ORDER BY p.Nom_patient, p.Prenom_patient";
 
-// Regroupement des données par patient
-$patients = [];
-foreach ($results as $row) {
-    $urap = $row['Numero_urap'];
+try {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    // En cas d'erreur, afficher le message et utiliser une requête de base
+    echo "<!-- DEBUG: Erreur SQL - " . $e->getMessage() . " -->";
     
-    if (!isset($patients[$urap])) {
-        $patients[$urap] = [
-            'info' => [
-                'Numero_urap' => $row['Numero_urap'],
-                'Nom_patient' => $row['Nom_patient'],
-                'Prenom_patient' => $row['Prenom_patient'],
-                'Age' => $row['Age'],
-                'Sexe_patient' => $row['Sexe_patient'],
-                'Contact_patient' => $row['Contact_patient'],
-                'Situation_matrimoniale' => $row['Situation_matrimoniale'],
-                'Lieu_résidence' => $row['Lieu_résidence']
-            ],
-            'visites' => []
-        ];
-    }
-    
-    // Ajouter la visite si elle existe
-    if ($row['id_visite']) {
-        $patients[$urap]['visites'][] = [
-            'id_visite' => $row['id_visite'],
-            'Date visite' => $row['Date visite'],
-            'Heure visite' => $row['Heure visite'],
-            'Motif visite' => $row['Motif visite'],
-            'Structure_provenance' => $row['Structure_provenance']
-        ];
-    }
+    // Requête de secours très simple
+    $sql_simple = "SELECT *, 0 as nb_visites, NULL as derniere_visite FROM patient ORDER BY Nom_patient, Prenom_patient";
+    $stmt = $pdo->prepare($sql_simple);
+    $stmt->execute();
+    $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Statistiques
 $total_patients = count($patients);
-$total_visites = 0;
-foreach ($patients as $patient) {
-    $total_visites += count($patient['visites']);
-}
+$total_visites = array_sum(array_column($patients, 'nb_visites'));
 ?>
 
 <!DOCTYPE html>
@@ -176,6 +173,18 @@ foreach ($patients as $patient) {
             font-size: 1.1rem;
             position: relative;
             z-index: 1;
+        }
+
+        .alert {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border-radius: 12px;
+            border: 1px solid #fbbf24;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .stats-bar {
@@ -298,222 +307,184 @@ foreach ($patients as $patient) {
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
-        .patients-list {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .dossiers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
         }
 
-        .patient-card {
+        .dossier-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            overflow: hidden;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1);
             transition: all 0.3s ease;
-        }
-
-        .patient-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        }
-
-        .patient-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            color: white;
-            padding: 20px 24px;
             cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
         }
 
-        .patient-info {
+        .dossier-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+
+        .dossier-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px -5px rgb(0 0 0 / 0.15);
+            border-color: var(--primary-light);
+        }
+
+        .dossier-header {
             display: flex;
             align-items: center;
             gap: 16px;
+            margin-bottom: 20px;
         }
 
         .patient-avatar {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            color: white;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 12px rgb(0 71 171 / 0.3);
         }
 
-        .patient-details h3 {
-            font-size: 1.3rem;
+        .patient-info h3 {
+            color: var(--gray-800);
+            font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 4px;
         }
 
         .patient-meta {
+            color: var(--gray-600);
             font-size: 0.9rem;
-            opacity: 0.9;
+            line-height: 1.4;
         }
 
-        .patient-stats {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            text-align: center;
-        }
-
-        .patient-stat {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .patient-stat-number {
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-
-        .patient-stat-label {
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        .expand-icon {
-            font-size: 1.2rem;
-            transition: transform 0.3s ease;
-        }
-
-        .expand-icon.rotated {
-            transform: rotate(180deg);
-        }
-
-        .patient-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .patient-content.expanded {
-            max-height: 1000px;
-        }
-
-        .patient-body {
-            padding: 24px;
-        }
-
-        .patient-info-grid {
+        .dossier-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
-        .info-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .stat-item {
+            text-align: center;
             padding: 12px;
             background: var(--gray-50);
-            border-radius: 8px;
+            border-radius: 12px;
+            border-left: 3px solid var(--primary);
         }
 
-        .info-icon {
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--primary);
-            font-size: 1.1rem;
-        }
-
-        .info-content {
-            flex: 1;
-        }
-
-        .info-label {
-            font-size: 0.8rem;
-            color: var(--gray-600);
             margin-bottom: 2px;
         }
 
-        .info-value {
-            font-weight: 600;
-            color: var(--gray-800);
+        .stat-label-small {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            font-weight: 500;
         }
 
-        .visites-section {
-            border-top: 2px solid var(--gray-200);
-            padding-top: 20px;
-        }
-
-        .visites-title {
-            color: var(--gray-700);
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 16px;
+        .dossier-details {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 8px;
         }
 
-        .visites-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
-        }
-
-        .visite-card {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: 12px;
-            padding: 16px;
-            transition: all 0.2s ease;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .visite-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            transform: translateY(-2px);
-        }
-
-        .visite-date {
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 8px;
-        }
-
-        .visite-details {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .visite-detail {
+        .detail-row {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
         }
 
-        .visite-detail i {
-            color: var(--gray-500);
+        .detail-icon {
+            color: var(--primary);
             width: 16px;
+            text-align: center;
         }
 
-        .visite-actions {
+        .detail-text {
+            color: var(--gray-700);
+            flex: 1;
+        }
+
+        .derniere-visite {
+            background: var(--success);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .aucune-visite {
+            background: var(--gray-400);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .dossier-actions {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 16px;
+            right: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.8rem;
+        .dossier-card:hover .dossier-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
         }
 
         .no-data {
             text-align: center;
-            padding: 60px 20px;
+            padding: 80px 20px;
             color: var(--gray-500);
         }
 
@@ -523,19 +494,11 @@ foreach ($patients as $patient) {
             opacity: 0.5;
         }
 
-        .empty-visites {
-            text-align: center;
-            padding: 30px;
-            color: var(--gray-500);
-            font-style: italic;
-        }
-
         .actions-bar {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 16px;
             padding: 20px;
-            margin-top: 24px;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             display: flex;
             justify-content: center;
@@ -547,23 +510,17 @@ foreach ($patients as $patient) {
                 padding: 10px;
             }
             
+            .dossiers-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
             .filters-grid {
                 grid-template-columns: 1fr;
             }
             
-            .patient-header {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-            }
-            
-            .patient-info-grid,
-            .visites-grid {
+            .dossier-stats {
                 grid-template-columns: 1fr;
-            }
-            
-            .patient-stats {
-                justify-content: center;
             }
         }
     </style>
@@ -572,8 +529,16 @@ foreach ($patients as $patient) {
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-folder-open"></i> Liste des Dossiers</h1>
-            <p>Gestion et consultation des dossiers patients</p>
+            <p>Cliquez sur un dossier patient pour voir ses visites</p>
         </div>
+
+        <?php if ($visite_count == 0): ?>
+        <div class="alert">
+            <i class="fas fa-info-circle"></i>
+            <strong>Information :</strong> Aucune visite n'est encore enregistrée dans le système. 
+            Les statistiques de visites seront disponibles une fois que vous aurez créé des visites pour vos patients.
+        </div>
+        <?php endif; ?>
 
         <div class="stats-bar">
             <div class="stat-card">
@@ -604,16 +569,6 @@ foreach ($patients as $patient) {
                                placeholder="Rechercher un patient...">
                     </div>
                     <div class="filter-group">
-                        <label class="filter-label">Date début</label>
-                        <input type="date" name="date_debut" class="filter-input" 
-                               value="<?= htmlspecialchars($date_debut) ?>">
-                    </div>
-                    <div class="filter-group">
-                        <label class="filter-label">Date fin</label>
-                        <input type="date" name="date_fin" class="filter-input" 
-                               value="<?= htmlspecialchars($date_fin) ?>">
-                    </div>
-                    <div class="filter-group">
                         <label class="filter-label">Sexe</label>
                         <select name="sexe" class="filter-input">
                             <option value="">Tous</option>
@@ -633,146 +588,81 @@ foreach ($patients as $patient) {
             </form>
         </div>
 
-        <div class="patients-list">
-            <?php if (empty($patients)): ?>
-                <div class="no-data">
-                    <i class="fas fa-folder-open"></i>
-                    <h3>Aucun dossier trouvé</h3>
-                    <p>Aucun patient ne correspond aux critères de recherche.</p>
-                </div>
-            <?php else: ?>
-                <?php foreach ($patients as $urap => $patient): ?>
-                    <div class="patient-card">
-                        <div class="patient-header" onclick="togglePatient('patient-<?= $urap ?>')">
-                            <div class="patient-info">
-                                <div class="patient-avatar">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="patient-details">
-                                    <h3><?= htmlspecialchars($patient['info']['Nom_patient'] . ' ' . $patient['info']['Prenom_patient']) ?></h3>
-                                    <div class="patient-meta">
-                                        N°URAP: <?= htmlspecialchars($patient['info']['Numero_urap']) ?> | 
-                                        <?= htmlspecialchars($patient['info']['Age']) ?> ans | 
-                                        <?= htmlspecialchars($patient['info']['Sexe_patient']) ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="patient-stats">
-                                <div class="patient-stat">
-                                    <div class="patient-stat-number"><?= count($patient['visites']) ?></div>
-                                    <div class="patient-stat-label">Visites</div>
-                                </div>
-                                <div class="expand-icon" id="icon-patient-<?= $urap ?>">
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                            </div>
+        <?php if (empty($patients)): ?>
+            <div class="no-data">
+                <i class="fas fa-folder-open"></i>
+                <h3>Aucun dossier trouvé</h3>
+                <p>Aucun patient ne correspond aux critères de recherche.</p>
+            </div>
+        <?php else: ?>
+            <div class="dossiers-grid">
+                <?php foreach ($patients as $patient): ?>
+                    <a href="visite_patient.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="dossier-card">
+                        <div class="dossier-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); window.location.href='visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>'" title="Nouvelle visite">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); window.location.href='visite_patient.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>'" title="Voir dossier complet">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
-                        
-                        <div class="patient-content" id="content-patient-<?= $urap ?>">
-                            <div class="patient-body">
-                                <div class="patient-info-grid">
-                                    <div class="info-item">
-                                        <i class="fas fa-phone info-icon"></i>
-                                        <div class="info-content">
-                                            <div class="info-label">Contact</div>
-                                            <div class="info-value"><?= htmlspecialchars($patient['info']['Contact_patient']) ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="info-item">
-                                        <i class="fas fa-map-marker-alt info-icon"></i>
-                                        <div class="info-content">
-                                            <div class="info-label">Résidence</div>
-                                            <div class="info-value"><?= htmlspecialchars($patient['info']['Lieu_résidence']) ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="info-item">
-                                        <i class="fas fa-ring info-icon"></i>
-                                        <div class="info-content">
-                                            <div class="info-label">Situation matrimoniale</div>
-                                            <div class="info-value"><?= htmlspecialchars($patient['info']['Situation_matrimoniale']) ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="info-item">
-                                        <i class="fas fa-plus-circle info-icon"></i>
-                                        <div class="info-content">
-                                            <div class="info-label">Nouvelle visite</div>
-                                            <div class="info-value">
-                                                <a href="visite.php?idU=<?= htmlspecialchars($patient['info']['Numero_urap']) ?>" 
-                                                   class="btn btn-primary btn-sm">
-                                                    <i class="fas fa-calendar-plus"></i> Nouvelle visite
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="info-item">
-                                        <i class="fas fa-file-medical info-icon"></i>
-                                        <div class="info-content">
-                                            <div class="info-label">Dossier complet</div>
-                                            <div class="info-value">
-                                                <a href="visites_patient.php?urap=<?= htmlspecialchars($patient['info']['Numero_urap']) ?>" 
-                                                   class="btn btn-secondary btn-sm">
-                                                    <i class="fas fa-folder-open"></i> Voir dossier
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <div class="visites-section">
-                                    <h4 class="visites-title">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        Historique des visites (<?= count($patient['visites']) ?>)
-                                    </h4>
-                                    
-                                    <?php if (empty($patient['visites'])): ?>
-                                        <div class="empty-visites">
-                                            <i class="fas fa-calendar-times"></i>
-                                            <p>Aucune visite enregistrée pour ce patient</p>
-                                            <a href="visite.php?idU=<?= htmlspecialchars($patient['info']['Numero_urap']) ?>" 
-                                               class="btn btn-primary" style="margin-top: 12px;">
-                                                <i class="fas fa-calendar-plus"></i> Créer la première visite
-                                            </a>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="visites-grid">
-                                            <?php foreach ($patient['visites'] as $visite): ?>
-                                                <div class="visite-card" onclick="window.location.href='dossier_complet.php?urap=<?= htmlspecialchars($patient['info']['Numero_urap']) ?>&visite_id=<?= htmlspecialchars($visite['id_visite']) ?>'">
-                                                    <div class="visite-actions" onclick="event.stopPropagation()">
-                                                        <a href="dossier_complet.php?urap=<?= htmlspecialchars($patient['info']['Numero_urap']) ?>&visite_id=<?= htmlspecialchars($visite['id_visite']) ?>" 
-                                                           class="btn btn-primary btn-sm">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                    </div>
-                                                    <div class="visite-date">
-                                                        <?= htmlspecialchars(date('d/m/Y', strtotime($visite['Date visite']))) ?>
-                                                    </div>
-                                                    <div class="visite-details">
-                                                        <div class="visite-detail">
-                                                            <i class="fas fa-clock"></i>
-                                                            <span><?= htmlspecialchars($visite['Heure visite']) ?></span>
-                                                        </div>
-                                                        <div class="visite-detail">
-                                                            <i class="fas fa-stethoscope"></i>
-                                                            <span><?= htmlspecialchars($visite['Motif visite']) ?></span>
-                                                        </div>
-                                                        <?php if ($visite['Structure_provenance']): ?>
-                                                        <div class="visite-detail">
-                                                            <i class="fas fa-hospital"></i>
-                                                            <span><?= htmlspecialchars($visite['Structure_provenance']) ?></span>
-                                                        </div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
+                        <div class="dossier-header">
+                            <div class="patient-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="patient-info">
+                                <h3><?= htmlspecialchars($patient['Nom_patient'] . ' ' . $patient['Prenom_patient']) ?></h3>
+                                <div class="patient-meta">
+                                    <strong>N°URAP:</strong> <?= htmlspecialchars($patient['Numero_urap']) ?><br>
+                                    <strong>Âge:</strong> <?= htmlspecialchars($patient['Age']) ?> ans | 
+                                    <strong>Sexe:</strong> <?= htmlspecialchars($patient['Sexe_patient']) ?>
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        <div class="dossier-stats">
+                            <div class="stat-item">
+                                <div class="stat-value"><?= $patient['nb_visites'] ?></div>
+                                <div class="stat-label-small">Visites</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value"><?= htmlspecialchars($patient['Age']) ?></div>
+                                <div class="stat-label-small">Ans</div>
+                            </div>
+                        </div>
+
+                        <div class="dossier-details">
+                            <div class="detail-row">
+                                <i class="fas fa-phone detail-icon"></i>
+                                <span class="detail-text"><?= htmlspecialchars($patient['Contact_patient']) ?></span>
+                            </div>
+                            <div class="detail-row">
+                                <i class="fas fa-map-marker-alt detail-icon"></i>
+                                <span class="detail-text"><?= htmlspecialchars($patient['Lieu_résidence']) ?></span>
+                            </div>
+                            <div class="detail-row">
+                                <i class="fas fa-calendar-alt detail-icon"></i>
+                                <span class="detail-text">
+                                    <?php if ($patient['derniere_visite']): ?>
+                                        Dernière visite: 
+                                        <span class="derniere-visite">
+                                            <?= htmlspecialchars(date('d/m/Y', strtotime($patient['derniere_visite']))) ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="aucune-visite">Aucune visite</span>
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                            <div class="detail-row">
+                                <i class="fas fa-ring detail-icon"></i>
+                                <span class="detail-text"><?= htmlspecialchars($patient['Situation_matrimoniale']) ?></span>
+                            </div>
+                        </div>
+                    </a>
                 <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
+            </div>
+        <?php endif; ?>
 
         <div class="actions-bar">
             <a href="accueil.php" class="btn btn-secondary">
@@ -785,30 +675,17 @@ foreach ($patients as $patient) {
     </div>
 
     <script>
-        function togglePatient(patientId) {
-            const content = document.getElementById('content-' + patientId);
-            const icon = document.getElementById('icon-' + patientId);
-            
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                icon.classList.remove('rotated');
-            } else {
-                content.classList.add('expanded');
-                icon.classList.add('rotated');
-            }
-        }
-
         // Animation d'entrée pour les cartes
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.patient-card');
+            const cards = document.querySelectorAll('.dossier-card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
+                card.style.transform = 'translateY(30px)';
                 setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
+                    card.style.transition = 'all 0.6s ease';
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
-                }, index * 100);
+                }, index * 150);
             });
         });
     </script>

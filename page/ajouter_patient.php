@@ -641,7 +641,7 @@ if (isset($_GET['error'])) {
             <div class="form-grid">
               <div class="form-field">
                 <label class="form-label">N° Urap</label>
-                <input type="text" class="form-input" id="N_Urap" name="N_Urap" required placeholder="Taper le numéro Urap">
+                <input type="text" class="form-input" id="Numero_urap" name="Numero_urap" required placeholder="Taper le numéro Urap">
               </div>
               <div class="form-field">
                 <label class="form-label">Nom</label>
