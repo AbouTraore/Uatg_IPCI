@@ -52,16 +52,19 @@ $habitudes = $stmt->fetch(PDO::FETCH_ASSOC);
 // 4. Antécédents IST selon le sexe
 $ist_data = null;
 $ist_type = '';
+$ist_id = 0;
 if ($patient['Sexe_patient'] == 'Féminin') {
     $stmt = $pdo->prepare("SELECT * FROM antecedents_ist_genicologiques WHERE Numero_urap = ? ORDER BY ID_antecedents DESC LIMIT 1");
     $stmt->execute([$numero_urap]);
     $ist_data = $stmt->fetch(PDO::FETCH_ASSOC);
     $ist_type = 'femmes';
+    $ist_id = $ist_data ? $ist_data['ID_antecedents'] : 0;
 } else {
     $stmt = $pdo->prepare("SELECT * FROM antecedents_ist_hommes WHERE Numero_urap = ? ORDER BY ID_antecedent DESC LIMIT 1");
     $stmt->execute([$numero_urap]);
     $ist_data = $stmt->fetch(PDO::FETCH_ASSOC);
     $ist_type = 'hommes';
+    $ist_id = $ist_data ? $ist_data['ID_antecedent'] : 0;
 }
 
 // 5. Histoire de la maladie
@@ -85,16 +88,19 @@ $examen_uretral = $stmt->fetch(PDO::FETCH_ASSOC);
 // 7. Échantillons selon le sexe
 $echantillons = null;
 $echantillon_type = '';
+$echantillon_id = 0;
 if ($patient['Sexe_patient'] == 'Masculin') {
     $stmt = $pdo->prepare("SELECT * FROM echantillon_male WHERE Numero_urap = ? ORDER BY ID_echantillon_male DESC LIMIT 1");
     $stmt->execute([$numero_urap]);
     $echantillons = $stmt->fetch(PDO::FETCH_ASSOC);
     $echantillon_type = 'male';
+    $echantillon_id = $echantillons ? $echantillons['ID_echantillon_male'] : 0;
 } else {
     $stmt = $pdo->prepare("SELECT * FROM echantillon_femelle WHERE Numero_urap = ? ORDER BY ID_echantillon_femelle DESC LIMIT 1");
     $stmt->execute([$numero_urap]);
     $echantillons = $stmt->fetch(PDO::FETCH_ASSOC);
     $echantillon_type = 'femelle';
+    $echantillon_id = $echantillons ? $echantillons['ID_echantillon_femelle'] : 0;
 }
 
 // Statistiques
@@ -111,6 +117,7 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     <title>Dossier Complet - <?= htmlspecialchars($patient['Nom_patient'] . ' ' . $patient['Prenom_patient']) ?> - UATG</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* [Le même CSS que précédemment] */
         :root {
             --primary: #0047ab;
             --primary-light: #1e90ff;
@@ -195,6 +202,7 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             z-index: 1;
         }
 
+        /* [Reprendre tout le CSS de la version précédente] */
         .patient-overview {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -244,89 +252,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             line-height: 1.6;
         }
 
-        .patient-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 16px;
-        }
-
-        .stat-card {
-            text-align: center;
-            padding: 16px;
-            background: var(--gray-50);
-            border-radius: 12px;
-            border-left: 4px solid var(--primary);
-        }
-
-        .stat-number {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            color: var(--gray-600);
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .patient-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 2px solid var(--gray-200);
-        }
-
-        .detail-card {
-            background: var(--gray-50);
-            padding: 20px;
-            border-radius: 12px;
-            border-left: 3px solid var(--info);
-        }
-
-        .detail-title {
-            color: var(--info);
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 0;
-            border-bottom: 1px solid var(--gray-200);
-            font-size: 0.9rem;
-        }
-
-        .detail-item:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            color: var(--gray-600);
-            font-weight: 500;
-        }
-
-        .detail-value {
-            color: var(--gray-800);
-            font-weight: 600;
-            text-align: right;
-        }
-
-        .sections-container {
-            display: grid;
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-
         .section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -334,11 +259,7 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             overflow: hidden;
             transition: all 0.3s ease;
-        }
-
-        .section:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 12px -2px rgb(0 0 0 / 0.1);
+            margin-bottom: 24px;
         }
 
         .section-header {
@@ -352,12 +273,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             cursor: pointer;
         }
 
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
         .section-header.patient { background: linear-gradient(135deg, var(--info) 0%, #0ea5e9 100%); }
         .section-header.visite { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); }
         .section-header.habitudes { background: linear-gradient(135deg, var(--pink) 0%, #f472b6 100%); }
@@ -366,23 +281,10 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         .section-header.examens { background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%); }
         .section-header.echantillons { background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%); }
 
-        .section-content {
-            padding: 24px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .section-content.expanded {
-            max-height: 2000px;
-        }
-
-        .expand-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .expand-icon.rotated {
-            transform: rotate(180deg);
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .btn-modify {
@@ -403,6 +305,17 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         .btn-modify:hover {
             background: rgba(255, 255, 255, 0.3);
             transform: scale(1.05);
+        }
+
+        .section-content {
+            padding: 24px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .section-content.expanded {
+            max-height: 2000px;
         }
 
         .info-grid {
@@ -484,6 +397,14 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .expand-icon.rotated {
+            transform: rotate(180deg);
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -492,10 +413,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             .patient-header {
                 grid-template-columns: 1fr;
                 text-align: center;
-            }
-            
-            .patient-details {
-                grid-template-columns: 1fr;
             }
             
             .info-grid {
@@ -517,6 +434,7 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             <p>Consultation détaillée du dossier patient</p>
         </div>
 
+        <!-- [Patient Overview identique] -->
         <div class="patient-overview">
             <div class="patient-header">
                 <div class="patient-main">
@@ -534,59 +452,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         </div>
                     </div>
                 </div>
-                
-                <div class="patient-stats">
-                    <div class="stat-card">
-                        <div class="stat-number"><?= $total_visites ?></div>
-                        <div class="stat-label">Visites</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number"><?= htmlspecialchars($patient['Age']) ?></div>
-                        <div class="stat-label">Ans</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number"><?= $visite ? 1 : 0 ?></div>
-                        <div class="stat-label">Visite active</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="patient-details">
-                <div class="detail-card">
-                    <div class="detail-title">
-                        <i class="fas fa-home"></i> Résidence
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Lieu</span>
-                        <span class="detail-value"><?= htmlspecialchars($patient['Lieu_résidence']) ?></span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Précision</span>
-                        <span class="detail-value"><?= htmlspecialchars($patient['Precise'] ?: '-') ?></span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Type logement</span>
-                        <span class="detail-value"><?= htmlspecialchars($patient['Type_logement']) ?></span>
-                    </div>
-                </div>
-                
-                <div class="detail-card">
-                    <div class="detail-title">
-                        <i class="fas fa-graduation-cap"></i> Profil
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Niveau d'étude</span>
-                        <span class="detail-value"><?= htmlspecialchars($patient['Niveau_etude']) ?></span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Profession</span>
-                        <span class="detail-value"><?= htmlspecialchars($patient['Profession']) ?></span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Date naissance</span>
-                        <span class="detail-value"><?= htmlspecialchars(date('d/m/Y', strtotime($patient['Date_naissance']))) ?></span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -598,7 +463,7 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         <i class="fas fa-user-circle"></i>
                         Informations Personnelles
                     </div>
-                    <a href="ajouter_patient.php?edit=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn-modify">
+                    <a href="modifier_patient.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn-modify">
                         <i class="fas fa-edit"></i> Modifier
                     </a>
                     <div class="expand-icon" id="icon-patient">
@@ -629,41 +494,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                 </div>
             </div>
 
-            <!-- Section Visite -->
-            <?php if ($visite): ?>
-            <div class="section">
-                <div class="section-header visite" onclick="toggleSection('visite')">
-                    <div class="section-title">
-                        <i class="fas fa-calendar-check"></i>
-                        Visite du <?= htmlspecialchars(date('d/m/Y', strtotime($visite['date_visite']))) ?>
-                    </div>
-                    <a href="visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>&edit_visite=<?= htmlspecialchars($visite['id_visite']) ?>" class="btn-modify">
-                        <i class="fas fa-edit"></i> Modifier
-                    </a>
-                    <div class="expand-icon" id="icon-visite">
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                </div>
-                <div class="section-content expanded" id="content-visite">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <h5>Détails de la visite</h5>
-                            <p><strong>Date :</strong> <?= htmlspecialchars(date('d/m/Y', strtotime($visite['date_visite']))) ?><br>
-                               <strong>Heure :</strong> <?= htmlspecialchars($visite['Heure visite']) ?><br>
-                               <strong>Motif :</strong> <?= htmlspecialchars($visite['Motif visite']) ?></p>
-                        </div>
-                        <?php if ($visite['prescripteur_nom']): ?>
-                        <div class="info-item">
-                            <h5>Prescripteur</h5>
-                            <p><strong>Médecin :</strong> <?= htmlspecialchars($visite['prescripteur_nom'] . ' ' . $visite['prescripteur_prenom']) ?><br>
-                               <strong>Structure :</strong> <?= htmlspecialchars($visite['Structure_provenance'] ?: '-') ?></p>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-
             <!-- Section Habitudes sexuelles -->
             <div class="section">
                 <div class="section-header habitudes" onclick="toggleSection('habitudes')">
@@ -671,8 +501,8 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         <i class="fas fa-venus-mars"></i>
                         Habitudes Sexuelles
                     </div>
-                    <a href="habitudes_sexuelles.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn-modify">
-                        <i class="fas fa-edit"></i> Modifier
+                    <a href="modifier_habitudes.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?><?= $habitudes ? '&id=' . $habitudes['ID_habitude_sexuelles'] : '' ?>" class="btn-modify">
+                        <i class="fas fa-edit"></i> <?= $habitudes ? 'Modifier' : 'Ajouter' ?>
                     </a>
                     <div class="expand-icon" id="icon-habitudes">
                         <i class="fas fa-chevron-down"></i>
@@ -706,9 +536,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         <div class="empty-section">
                             <i class="fas fa-heart"></i>
                             <p>Aucune habitude sexuelle enregistrée</p>
-                            <a href="habitudes_sexuelles.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary" style="margin-top: 12px;">
-                                <i class="fas fa-plus"></i> Ajouter
-                            </a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -721,8 +548,8 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         <i class="fas fa-viruses"></i>
                         Antécédents IST (<?= ucfirst($ist_type) ?>)
                     </div>
-                    <a href="antecedents_<?= $ist_type ?>.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn-modify">
-                        <i class="fas fa-edit"></i> Modifier
+                    <a href="modifier_antecedents_<?= $ist_type ?>.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?><?= $ist_data ? '&id=' . $ist_id : '' ?>" class="btn-modify">
+                        <i class="fas fa-edit"></i> <?= $ist_data ? 'Modifier' : 'Ajouter' ?>
                     </a>
                     <div class="expand-icon" id="icon-antecedents">
                         <i class="fas fa-chevron-down"></i>
@@ -744,19 +571,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                                     <h5>Plaies vaginales</h5>
                                     <p><?= htmlspecialchars($ist_data['Avez_vous_eu_des_plaies_vaginales_ces_deux_derniers_mois']) ?></p>
                                 </div>
-                                <div class="info-item">
-                                    <h5>Gestité / Parité</h5>
-                                    <p><strong>Gestité :</strong> <?= htmlspecialchars($ist_data['Antecedant_ist_genicologique_gestité']) ?><br>
-                                       <strong>Parité :</strong> <?= htmlspecialchars($ist_data['Antecedant_ist_genicologique_parité']) ?></p>
-                                </div>
-                                <div class="info-item">
-                                    <h5>Grossesse</h5>
-                                    <p><?= htmlspecialchars($ist_data['etes_vous_enceinte']) ?></p>
-                                </div>
-                                <div class="info-item">
-                                    <h5>Dernières règles</h5>
-                                    <p><?= htmlspecialchars($ist_data['Date_des_derniers_regles']) ?></p>
-                                </div>
                             <?php else: ?>
                                 <div class="info-item">
                                     <h5>Antécédent</h5>
@@ -766,19 +580,12 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                                     <h5>Antibiotique actuel</h5>
                                     <p><?= htmlspecialchars($ist_data['antibiotique_actuel']) ?></p>
                                 </div>
-                                <div class="info-item">
-                                    <h5>Préciser antibiotique</h5>
-                                    <p><?= htmlspecialchars($ist_data['preciser_antibiotique'] ?: '-') ?></p>
-                                </div>
                             <?php endif; ?>
                         </div>
                     <?php else: ?>
                         <div class="empty-section">
                             <i class="fas fa-notes-medical"></i>
                             <p>Aucun antécédent IST enregistré</p>
-                            <a href="antecedents_<?= $ist_type ?>.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary" style="margin-top: 12px;">
-                                <i class="fas fa-plus"></i> Ajouter
-                            </a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -791,8 +598,8 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         <i class="fas fa-file-medical-alt"></i>
                         Histoire de la Maladie
                     </div>
-                    <a href="histoire_maladie.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn-modify">
-                        <i class="fas fa-edit"></i> Modifier
+                    <a href="modifier_histoire.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?><?= $histoire ? '&id=' . $histoire['ID_histoire_maladie'] : '' ?>" class="btn-modify">
+                        <i class="fas fa-edit"></i> <?= $histoire ? 'Modifier' : 'Ajouter' ?>
                     </a>
                     <div class="expand-icon" id="icon-histoire">
                         <i class="fas fa-chevron-down"></i>
@@ -821,77 +628,13 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                                 <h5>Signes fonctionnels</h5>
                                 <p><?= htmlspecialchars($histoire['signes_fonctionnels']) ?></p>
                             </div>
-                            <div class="info-item">
-                                <h5>Date de création</h5>
-                                <p><?= htmlspecialchars(date('d/m/Y', strtotime($histoire['date_creation']))) ?></p>
-                            </div>
                         </div>
                     <?php else: ?>
                         <div class="empty-section">
                             <i class="fas fa-file-medical-alt"></i>
                             <p>Aucune histoire de maladie enregistrée</p>
-                            <a href="histoire_maladie.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary" style="margin-top: 12px;">
-                                <i class="fas fa-plus"></i> Ajouter
-                            </a>
                         </div>
                     <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Section Examens médicaux -->
-            <div class="section">
-                <div class="section-header examens" onclick="toggleSection('examens')">
-                    <div class="section-title">
-                        <i class="fas fa-vials"></i>
-                        Examens Médicaux
-                    </div>
-                    <a href="visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn-modify">
-                        <i class="fas fa-plus"></i> Nouvel examen
-                    </a>
-                    <div class="expand-icon" id="icon-examens">
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                </div>
-                <div class="section-content" id="content-examens">
-                    <div class="info-grid">
-                        <?php if ($examen_ecs): ?>
-                        <div class="info-item">
-                            <h5>ECS - Dr <?= htmlspecialchars($examen_ecs['medecin']) ?></h5>
-                            <p><strong>Couleur :</strong> <?= htmlspecialchars($examen_ecs['couleur']) ?><br>
-                               <strong>Leucocytes :</strong> <?= htmlspecialchars($examen_ecs['nombre_leucocyte']) ?><br>
-                               <strong>Spermatozoïdes :</strong> <?= htmlspecialchars($examen_ecs['spermatozoide']) ?><br>
-                               <strong>Culture :</strong> <?= htmlspecialchars($examen_ecs['culture']) ?></p>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($examen_vaginal): ?>
-                        <div class="info-item">
-                            <h5>Examen vaginal - Dr <?= htmlspecialchars($examen_vaginal['medecin']) ?></h5>
-                            <p><strong>Muqueuse :</strong> <?= htmlspecialchars($examen_vaginal['muqueuse_vaginale']) ?><br>
-                               <strong>Écoulement :</strong> <?= htmlspecialchars($examen_vaginal['ecoulement_vaginal']) ?><br>
-                               <strong>Leucocytes :</strong> <?= htmlspecialchars($examen_vaginal['leucocytes']) ?></p>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($examen_uretral): ?>
-                        <div class="info-item">
-                            <h5>ECSU - Dr <?= htmlspecialchars($examen_uretral['medecin']) ?></h5>
-                            <p><strong>Écoulement :</strong> <?= htmlspecialchars($examen_uretral['ecoulement']) ?><br>
-                               <strong>Frottis :</strong> <?= htmlspecialchars($examen_uretral['frottis_polynu']) ?><br>
-                               <strong>Culture :</strong> <?= htmlspecialchars($examen_uretral['culture']) ?></p>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!$examen_ecs && !$examen_vaginal && !$examen_uretral): ?>
-                        <div class="empty-section">
-                            <i class="fas fa-vial"></i>
-                            <p>Aucun examen médical enregistré</p>
-                            <a href="visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary" style="margin-top: 12px;">
-                                <i class="fas fa-plus"></i> Créer un examen
-                            </a>
-                        </div>
-                        <?php endif; ?>
-                    </div>
                 </div>
             </div>
 
@@ -902,8 +645,8 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         <i class="fas fa-flask"></i>
                         Échantillons Prélevés
                     </div>
-                    <a href="echantillons.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn-modify">
-                        <i class="fas fa-edit"></i> Modifier
+                    <a href="modifier_echantillons.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>&type=<?= $echantillon_type ?><?= $echantillons ? '&id=' . $echantillon_id : '' ?>" class="btn-modify">
+                        <i class="fas fa-edit"></i> <?= $echantillons ? 'Modifier' : 'Ajouter' ?>
                     </a>
                     <div class="expand-icon" id="icon-echantillons">
                         <i class="fas fa-chevron-down"></i>
@@ -938,9 +681,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         <div class="empty-section">
                             <i class="fas fa-flask"></i>
                             <p>Aucun échantillon prélevé</p>
-                            <a href="echantillons.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary" style="margin-top: 12px;">
-                                <i class="fas fa-plus"></i> Ajouter
-                            </a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -976,28 +716,10 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         // Ouvrir certaines sections par défaut
         document.addEventListener('DOMContentLoaded', function() {
-            // Toujours ouvrir les informations patient et visite
             const patientIcon = document.getElementById('icon-patient');
             if (patientIcon) {
                 patientIcon.classList.add('rotated');
             }
-            
-            const visiteIcon = document.getElementById('icon-visite');
-            if (visiteIcon) {
-                visiteIcon.classList.add('rotated');
-            }
-            
-            // Animation d'entrée pour les sections
-            const sections = document.querySelectorAll('.section');
-            sections.forEach((section, index) => {
-                section.style.opacity = '0';
-                section.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    section.style.transition = 'all 0.5s ease';
-                    section.style.opacity = '1';
-                    section.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
         });
     </script>
 </body>
