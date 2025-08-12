@@ -117,7 +117,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     <title>Dossier Complet - <?= htmlspecialchars($patient['Nom_patient'] . ' ' . $patient['Prenom_patient']) ?> - UATG</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* [Le même CSS que précédemment] */
         :root {
             --primary: #0047ab;
             --primary-light: #1e90ff;
@@ -202,7 +201,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             z-index: 1;
         }
 
-        /* [Reprendre tout le CSS de la version précédente] */
         .patient-overview {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -315,7 +313,7 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         }
 
         .section-content.expanded {
-            max-height: 2000px;
+            max-height: 3000px;
         }
 
         .info-grid {
@@ -405,6 +403,23 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             transform: rotate(180deg);
         }
 
+        /* Styles pour organiser les antécédents par catégories */
+        .antecedents-section {
+            margin-bottom: 24px;
+        }
+
+        .antecedents-title {
+            color: var(--warning);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -434,7 +449,6 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             <p>Consultation détaillée du dossier patient</p>
         </div>
 
-        <!-- [Patient Overview identique] -->
         <div class="patient-overview">
             <div class="patient-header">
                 <div class="patient-main">
@@ -557,21 +571,125 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                 </div>
                 <div class="section-content" id="content-antecedents">
                     <?php if ($ist_data): ?>
-                        <div class="info-grid">
-                            <?php if ($ist_type == 'femmes'): ?>
-                                <div class="info-item">
-                                    <h5>Pertes vaginales (2 mois)</h5>
-                                    <p><?= htmlspecialchars($ist_data['Avez_vous_eu_des_pertes_vaginales_ces_deux_derniers_mois']) ?></p>
+                        <?php if ($ist_type == 'femmes'): ?>
+                            <!-- Symptômes des 2 derniers mois -->
+                            <div class="antecedents-section">
+                                <h4 class="antecedents-title">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Symptômes des 2 derniers mois
+                                </h4>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <h5>Pertes vaginales</h5>
+                                        <p><?= htmlspecialchars($ist_data['Avez_vous_eu_des_pertes_vaginales_ces_deux_derniers_mois'] ?? '-') ?></p>
+                                    </div>
+                                    <div class="info-item">
+                                        <h5>Douleurs bas ventre</h5>
+                                        <p><?= htmlspecialchars($ist_data['Avez_vous_eu_des_douleurs_au_bas_ventre_ces_deux_derniers_mois'] ?? '-') ?></p>
+                                    </div>
+                                    <div class="info-item">
+                                        <h5>Plaies vaginales</h5>
+                                        <p><?= htmlspecialchars($ist_data['Avez_vous_eu_des_plaies_vaginales_ces_deux_derniers_mois'] ?? '-') ?></p>
+                                    </div>
+                                    <div class="info-item">
+                                        <h5>Douleurs lors des rapports</h5>
+                                        <p><?= htmlspecialchars($ist_data['Avez_vous_eu_mal_au_cours_des_derniers_rapport_sexuels'] ?? '-') ?></p>
+                                    </div>
                                 </div>
-                                <div class="info-item">
-                                    <h5>Douleurs bas ventre</h5>
-                                    <p><?= htmlspecialchars($ist_data['Avez_vous_eu_des_douleurs_au_bas_ventre_ces_deux_derniers_mois']) ?></p>
+                            </div>
+
+                            <!-- Antécédents gynécologiques -->
+                            <div class="antecedents-section">
+                                <h4 class="antecedents-title">
+                                    <i class="fas fa-baby"></i>
+                                    Antécédents gynécologiques
+                                </h4>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <h5>Gestité / Parité</h5>
+                                        <p><strong>Gestité :</strong> <?= htmlspecialchars($ist_data['Antecedant_ist_genicologique_gestité'] ?? '-') ?><br>
+                                           <strong>Parité :</strong> <?= htmlspecialchars($ist_data['Antecedant_ist_genicologique_parité'] ?? '-') ?></p>
+                                    </div>
+                                    <div class="info-item">
+                                        <h5>Dernières règles</h5>
+                                        <p><?= htmlspecialchars($ist_data['Date_des_derniers_regles'] ?? '-') ?></p>
+                                    </div>
+                                    <div class="info-item">
+                                        <h5>IVG cette année</h5>
+                                        <p><?= htmlspecialchars($ist_data['Avez_vous_eu_des_ivgcette_annee_moins_d_un_an'] ?? '-') ?></p>
+                                    </div>
+                                    <div class="info-item">
+                                        <h5>État actuelle</h5>
+                                        <p><?= htmlspecialchars($ist_data['etes_vous_enceinte'] ?? '-') ?></p>
+                                    </div>
                                 </div>
-                                <div class="info-item">
-                                    <h5>Plaies vaginales</h5>
-                                    <p><?= htmlspecialchars($ist_data['Avez_vous_eu_des_plaies_vaginales_ces_deux_derniers_mois']) ?></p>
+                            </div>
+
+                            <!-- Hygiène intime -->
+                            <div class="antecedents-section">
+                                <h4 class="antecedents-title">
+                                    <i class="fas fa-soap"></i>
+                                    Hygiène intime
+                                </h4>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <h5>Toilette vaginale avec les doigts</h5>
+                                        <p><?= htmlspecialchars($ist_data['Pratiquez_vous_une_toillette_vaginale_avec_les_doigts_'] ?? '-') ?></p>
+                                    </div>
+                                    <?php if (!empty($ist_data['Si_oui_avec_quoi'])): ?>
+                                    <div class="info-item">
+                                        <h5>Avec quoi (toilette)</h5>
+                                        <p><?= htmlspecialchars($ist_data['Si_oui_avec_quoi']) ?></p>
+                                    </div>
+                                    <?php endif; ?>
+                                    <div class="info-item">
+                                        <h5>Tampon pendant les règles</h5>
+                                        <p><?= htmlspecialchars($ist_data['Quel_tampon_utilisez_vous_pendant_les_regles'] ?? '-') ?></p>
+                                    </div>
                                 </div>
-                            <?php else: ?>
+                            </div>
+
+                            <!-- Traitement et consultation -->
+                            <div class="antecedents-section">
+                                <h4 class="antecedents-title">
+                                    <i class="fas fa-pills"></i>
+                                    Traitement et consultation
+                                </h4>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <h5>Qui avez-vous consulté</h5>
+                                        <p><?= htmlspecialchars($ist_data['qui_avez_vous_consulte'] ?? '-') ?></p>
+                                    </div>
+                                    <div class="info-item">
+                                        <h5>Médicaments prescrits</h5>
+                                        <p><?= htmlspecialchars($ist_data['medicaments_prescrits'] ?? '-') ?></p>
+                                    </div>
+                                    <?php if (!empty($ist_data['preciser_medicaments'])): ?>
+                                    <div class="info-item">
+                                        <h5>Préciser médicaments</h5>
+                                        <p><?= htmlspecialchars($ist_data['preciser_medicaments']) ?></p>
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($ist_data['duree_traitement'])): ?>
+                                    <div class="info-item">
+                                        <h5>Durée du traitement</h5>
+                                        <p><?= htmlspecialchars($ist_data['duree_traitement']) ?></p>
+                                    </div>
+                                    <?php endif; ?>
+                                    <div class="info-item">
+                                        <h5>Antibiotique actuellement</h5>
+                                        <p><?= htmlspecialchars($ist_data['Prenez_vous_un_antibiotique_actuellement'] ?? '-') ?></p>
+                                    </div>
+                                    <?php if (!empty($ist_data['autre'])): ?>
+                                    <div class="info-item">
+                                        <h5>Autres informations</h5>
+                                        <p><?= htmlspecialchars($ist_data['autre']) ?></p>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="info-grid">
                                 <div class="info-item">
                                     <h5>Antécédent</h5>
                                     <p><?= htmlspecialchars($ist_data['antecedent']) ?></p>
@@ -580,8 +698,14 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                                     <h5>Antibiotique actuel</h5>
                                     <p><?= htmlspecialchars($ist_data['antibiotique_actuel']) ?></p>
                                 </div>
-                            <?php endif; ?>
-                        </div>
+                                <?php if (!empty($ist_data['preciser_antibiotique'])): ?>
+                                <div class="info-item">
+                                    <h5>Préciser antibiotique</h5>
+                                    <p><?= htmlspecialchars($ist_data['preciser_antibiotique']) ?></p>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                     <?php else: ?>
                         <div class="empty-section">
                             <i class="fas fa-notes-medical"></i>
