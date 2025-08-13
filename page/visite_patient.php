@@ -287,6 +287,7 @@ foreach ($visites as $visite) {
         .visite-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            border-left-color: var(--success);
         }
 
         .visite-header {
@@ -306,6 +307,10 @@ foreach ($visites as $visite) {
             color: var(--primary);
             font-size: 1.3rem;
             font-weight: 700;
+        }
+
+        .visite-card:hover .visite-date {
+            color: var(--success);
         }
 
         .visite-time {
@@ -368,6 +373,9 @@ foreach ($visites as $visite) {
             right: 16px;
             opacity: 0;
             transition: opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .visite-card:hover .visite-actions {
@@ -376,10 +384,10 @@ foreach ($visites as $visite) {
 
         .action-btn {
             background: rgba(255, 255, 255, 0.9);
-            border: none;
+            border: 1px solid var(--gray-200);
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -387,13 +395,22 @@ foreach ($visites as $visite) {
             color: var(--primary);
             font-size: 1rem;
             transition: all 0.2s ease;
-            margin-bottom: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .action-btn:hover {
             background: var(--primary);
             color: white;
             transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .action-btn.dossier:hover {
+            background: var(--success);
+        }
+
+        .action-btn.edit:hover {
+            background: var(--warning);
         }
 
         .empty-state {
@@ -454,6 +471,41 @@ foreach ($visites as $visite) {
             margin-left: 8px;
         }
 
+        /* Tooltip pour les boutons d'action */
+        .action-btn[title]:hover:after {
+            content: attr(title);
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-800);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+
+        /* Message d'indication pour les clics */
+        .click-indicator {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 71, 171, 0.1);
+            color: var(--primary);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .visite-card:hover .click-indicator {
+            opacity: 1;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -473,6 +525,14 @@ foreach ($visites as $visite) {
                 gap: 16px;
                 text-align: center;
             }
+
+            .visite-actions {
+                position: relative;
+                opacity: 1;
+                flex-direction: row;
+                justify-content: center;
+                margin-top: 16px;
+            }
         }
     </style>
 </head>
@@ -480,7 +540,7 @@ foreach ($visites as $visite) {
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> Visites du Patient</h1>
-            <p>Historique complet des visites et consultations</p>
+            <p>Cliquez sur une visite pour accéder au dossier complet correspondant</p>
         </div>
 
         <div class="patient-overview">
@@ -545,14 +605,18 @@ foreach ($visites as $visite) {
                     $is_today = date('Y-m-d') == $visite['date_visite'];
                     $is_recent = (strtotime('now') - strtotime($visite['date_visite'])) <= (7 * 24 * 60 * 60); // 7 jours
                     ?>
-                    <div class="visite-card" onclick="window.location.href='visite_detail.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>&visite_id=<?= htmlspecialchars($visite['id_visite']) ?>'">
+                    <div class="visite-card" onclick="window.location.href='dossier_complet.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>&visite_id=<?= htmlspecialchars($visite['id_visite']) ?>'">
                         <div class="visite-actions" onclick="event.stopPropagation()">
-                            <button class="action-btn" onclick="window.location.href='visite_detail.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>&visite_id=<?= htmlspecialchars($visite['id_visite']) ?>'" title="Voir détails">
-                                <i class="fas fa-eye"></i>
+                            <button class="action-btn dossier" onclick="window.location.href='dossier_complet.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>&visite_id=<?= htmlspecialchars($visite['id_visite']) ?>'" title="Dossier complet de cette visite">
+                                <i class="fas fa-file-medical"></i>
                             </button>
-                            <button class="action-btn" onclick="window.location.href='visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>&edit_visite=<?= htmlspecialchars($visite['id_visite']) ?>'" title="Modifier">
+                            <button class="action-btn edit" onclick="window.location.href='visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>&edit_visite=<?= htmlspecialchars($visite['id_visite']) ?>'" title="Modifier cette visite">
                                 <i class="fas fa-edit"></i>
                             </button>
+                        </div>
+
+                        <div class="click-indicator">
+                            <i class="fas fa-mouse-pointer"></i> Cliquer pour le dossier complet
                         </div>
 
                         <div class="visite-header">
@@ -636,8 +700,8 @@ foreach ($visites as $visite) {
             <a href="liste_dossiers.php" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Retour à la liste
             </a>
-            <a href="visite_detail.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-secondary">
-                <i class="fas fa-file-medical"></i> Dossier complet
+            <a href="dossier_complet.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-secondary">
+                <i class="fas fa-file-medical"></i> Dossier complet (dernière visite)
             </a>
             <a href="visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nouvelle visite
@@ -660,14 +724,29 @@ foreach ($visites as $visite) {
             });
         });
 
-        // Effet de hover pour les cartes
+        // Effet de hover amélioré pour les cartes
         document.querySelectorAll('.visite-card').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transform = 'translateY(-4px)';
+                this.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1)';
             });
             
             card.addEventListener('mouseleave', function() {
                 this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
+            });
+        });
+
+        // Animation de feedback au clic
+        document.querySelectorAll('.visite-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Ne pas appliquer l'effet si on clique sur les boutons d'action
+                if (e.target.closest('.visite-actions')) return;
+                
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-4px)';
+                }, 100);
             });
         });
     </script>
