@@ -635,7 +635,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
         </div>
 
         <div class="actions-bar">
-            <a href="liste_dossiers.php" class="btn btn-secondary">
+            <a href="liste_dossier.php" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Retour à la liste
             </a>
         </div>

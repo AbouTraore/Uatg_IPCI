@@ -812,10 +812,10 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         </div>
 
         <div class="actions-bar">
-            <a href="visites_patient.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-secondary">
+            <a href="visite_patient.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Retour aux visites
             </a>
-            <a href="liste_dossiers.php" class="btn btn-secondary">
+            <a href="liste_dossier.php" class="btn btn-secondary">
                 <i class="fas fa-list"></i> Liste des dossiers
             </a>
             <a href="visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary">

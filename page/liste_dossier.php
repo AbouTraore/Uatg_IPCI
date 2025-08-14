@@ -2,9 +2,96 @@
 require_once("identifier.php");
 require_once("connexion.php");
 
-// Récupération des paramètres de recherche/filtre
+// Traitement des actions d'amélioration des visites
+$message = '';
+$messageType = 'info';
+
+if ($_POST) {
+    try {
+        switch ($_POST['action']) {
+            case 'ameliorer_visites':
+                $nombre = intval($_POST['nombre_visites']);
+                $type = $_POST['type_visite'];
+                
+                // Récupérer des patients aléatoirement
+                $stmt = $pdo->query("SELECT Numero_urap FROM patient ORDER BY RAND() LIMIT " . min($nombre, 50));
+                $patients = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                
+                // Récupérer un prescripteur existant
+                $stmt = $pdo->query("SELECT ID_prescripteur FROM prescriteur ORDER BY RAND() LIMIT 1");
+                $prescripteur = $stmt->fetch();
+                $id_prescripteur = $prescripteur ? $prescripteur['ID_prescripteur'] : 1;
+                
+                $visitesAjoutees = 0;
+                foreach ($patients as $numeroUrap) {
+                    $date = date('Y-m-d', strtotime('-' . rand(0, 30) . ' days'));
+                    $heure = sprintf("%02d:%02d", rand(8, 17), rand(0, 59));
+                    
+                    $stmt = $pdo->prepare("
+                        INSERT INTO visite (
+                            date_visite, `Heure visite`, `Motif visite`, Numero_urap, 
+                            ID_prescripteur, Structure_provenance, ID_antecedents, ID_antecedent,
+                            ID_histoire_maladie, ID_habitude_sexuelles
+                        ) VALUES (?, ?, ?, ?, ?, 'ipci', NULL, 0, NULL, NULL)
+                    ");
+                    
+                    $stmt->execute([$date, $heure, $type, $numeroUrap, $id_prescripteur]);
+                    $visitesAjoutees++;
+                }
+                
+                $message = "$visitesAjoutees visites ajoutées avec succès !";
+                $messageType = 'success';
+                break;
+                
+            case 'optimiser_auto':
+                // Ajouter 2-5 visites à chaque patient
+                $stmt = $pdo->query("SELECT Numero_urap FROM patient");
+                $patients = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                
+                $stmt = $pdo->query("SELECT ID_prescripteur FROM prescriteur ORDER BY RAND() LIMIT 1");
+                $prescripteur = $stmt->fetch();
+                $id_prescripteur = $prescripteur ? $prescripteur['ID_prescripteur'] : 1;
+                
+                $totalAjoute = 0;
+                $motifs = ['consultation', 'controle', 'depistage'];
+                
+                foreach ($patients as $numeroUrap) {
+                    $nbVisites = rand(2, 5);
+                    for ($i = 0; $i < $nbVisites; $i++) {
+                        $date = date('Y-m-d', strtotime('-' . rand(0, 60) . ' days'));
+                        $heure = sprintf("%02d:%02d", rand(8, 17), rand(0, 59));
+                        $motif = $motifs[array_rand($motifs)];
+                        
+                        $stmt = $pdo->prepare("
+                            INSERT INTO visite (
+                                date_visite, `Heure visite`, `Motif visite`, Numero_urap, 
+                                ID_prescripteur, Structure_provenance, ID_antecedents, ID_antecedent,
+                                ID_histoire_maladie, ID_habitude_sexuelles
+                            ) VALUES (?, ?, ?, ?, ?, 'ipci', NULL, 0, NULL, NULL)
+                        ");
+                        
+                        $stmt->execute([$date, $heure, $motif, $numeroUrap, $id_prescripteur]);
+                        $totalAjoute++;
+                    }
+                }
+                
+                $message = "Optimisation terminée ! $totalAjoute visites ajoutées.";
+                $messageType = 'success';
+                break;
+        }
+    } catch (Exception $e) {
+        $message = "Erreur : " . $e->getMessage();
+        $messageType = 'error';
+    }
+}
+
+// Récupération des paramètres de recherche/filtre améliorés
 $search = $_GET['search'] ?? '';
 $sexe_filter = $_GET['sexe'] ?? '';
+$age_min = $_GET['age_min'] ?? '';
+$age_max = $_GET['age_max'] ?? '';
+$situation_filter = $_GET['situation'] ?? '';
+$lieu_filter = $_GET['lieu'] ?? '';
 
 // D'abord, vérifier si la table visite a des données et quelles colonnes elle a
 try {
@@ -28,7 +115,7 @@ try {
         // Requête normale avec jointure
         $sql = "SELECT p.*, 
                        COALESCE(COUNT(v.id_visite), 0) as nb_visites, 
-                       MAX(v.`Date visite`) as derniere_visite
+                       MAX(v.date_visite) as derniere_visite
                 FROM patient p 
                 LEFT JOIN visite v ON p.Numero_urap = v.Numero_urap 
                 WHERE 1=1";
@@ -44,10 +131,11 @@ try {
 
 $params = [];
 
-// Ajout des conditions de recherche
+// Ajout des conditions de recherche améliorées
 if ($search) {
-    $sql .= " AND (p.Nom_patient LIKE ? OR p.Prenom_patient LIKE ? OR p.Numero_urap LIKE ?)";
+    $sql .= " AND (p.Nom_patient LIKE ? OR p.Prenom_patient LIKE ? OR p.Numero_urap LIKE ? OR p.Contact_patient LIKE ?)";
     $searchParam = "%$search%";
+    $params[] = $searchParam;
     $params[] = $searchParam;
     $params[] = $searchParam;
     $params[] = $searchParam;
@@ -56,6 +144,26 @@ if ($search) {
 if ($sexe_filter) {
     $sql .= " AND p.Sexe_patient = ?";
     $params[] = $sexe_filter;
+}
+
+if ($age_min) {
+    $sql .= " AND p.Age >= ?";
+    $params[] = $age_min;
+}
+
+if ($age_max) {
+    $sql .= " AND p.Age <= ?";
+    $params[] = $age_max;
+}
+
+if ($situation_filter) {
+    $sql .= " AND p.Situation_matrimoniale = ?";
+    $params[] = $situation_filter;
+}
+
+if ($lieu_filter) {
+    $sql .= " AND p.Lieu_résidence LIKE ?";
+    $params[] = "%$lieu_filter%";
 }
 
 // Ajouter GROUP BY seulement si on a fait une jointure
@@ -83,6 +191,10 @@ try {
 // Statistiques
 $total_patients = count($patients);
 $total_visites = array_sum(array_column($patients, 'nb_visites'));
+
+// Récupérer les options pour les filtres
+$situations = $pdo->query("SELECT DISTINCT Situation_matrimoniale FROM patient WHERE Situation_matrimoniale != ''")->fetchAll(PDO::FETCH_COLUMN);
+$lieux = $pdo->query("SELECT DISTINCT Lieu_résidence FROM patient WHERE Lieu_résidence != ''")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
 <!DOCTYPE html>
@@ -176,15 +288,36 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
         }
 
         .alert {
-            background: #fef3c7;
-            color: #92400e;
             padding: 16px 20px;
             margin-bottom: 24px;
             border-radius: 12px;
-            border: 1px solid #fbbf24;
             display: flex;
             align-items: center;
             gap: 8px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-info {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .stats-bar {
@@ -219,6 +352,38 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
             font-weight: 500;
         }
 
+        .amelioration-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .amelioration-title {
+            color: var(--gray-700);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .amelioration-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .amelioration-card {
+            background: var(--gray-50);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--success);
+        }
+
         .filters-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -240,7 +405,7 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
 
         .filters-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             margin-bottom: 20px;
         }
@@ -261,7 +426,7 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
             padding: 10px 12px;
             border: 1px solid var(--gray-300);
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 16px;
             transition: all 0.2s ease;
         }
 
@@ -281,7 +446,7 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
             padding: 10px 20px;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -293,6 +458,16 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
             color: white;
         }
 
@@ -515,7 +690,7 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
                 gap: 16px;
             }
             
-            .filters-grid {
+            .filters-grid, .amelioration-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -532,11 +707,18 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
             <p>Cliquez sur un dossier patient pour voir ses visites</p>
         </div>
 
+        <?php if ($message): ?>
+        <div class="alert alert-<?= $messageType ?>">
+            <i class="fas fa-<?= $messageType == 'success' ? 'check-circle' : ($messageType == 'error' ? 'exclamation-triangle' : 'info-circle') ?>"></i>
+            <strong><?= htmlspecialchars($message) ?></strong>
+        </div>
+        <?php endif; ?>
+
         <?php if ($visite_count == 0): ?>
-        <div class="alert">
+        <div class="alert alert-info">
             <i class="fas fa-info-circle"></i>
             <strong>Information :</strong> Aucune visite n'est encore enregistrée dans le système. 
-            Les statistiques de visites seront disponibles une fois que vous aurez créé des visites pour vos patients.
+            Utilisez les outils d'amélioration ci-dessous pour ajouter des visites.
         </div>
         <?php endif; ?>
 
@@ -555,18 +737,65 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
             </div>
         </div>
 
+        <!-- Section Amélioration des Visites -->
+        <div class="amelioration-section">
+            <h3 class="amelioration-title">
+                <i class="fas fa-chart-line"></i>
+                Amélioration des Visites
+            </h3>
+            <div class="amelioration-grid">
+                <div class="amelioration-card">
+                    <h4 style="color: var(--success); margin-bottom: 12px;">
+                        <i class="fas fa-plus-circle"></i> Ajouter des Visites
+                    </h4>
+                    <form method="POST" style="display: flex; flex-direction: column; gap: 12px;">
+                        <input type="hidden" name="action" value="ameliorer_visites">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <select name="type_visite" class="filter-input" required>
+                                <option value="consultation">Consultation</option>
+                                <option value="controle">Contrôle</option>
+                                <option value="depistage">Dépistage</option>
+                                <option value="urgence">Urgence</option>
+                            </select>
+                            <input type="number" name="nombre_visites" class="filter-input" 
+                                   min="1" max="50" value="10" placeholder="Nombre" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Ajouter Visites
+                        </button>
+                    </form>
+                </div>
+
+                <div class="amelioration-card">
+                    <h4 style="color: var(--warning); margin-bottom: 12px;">
+                        <i class="fas fa-magic"></i> Optimisation Auto
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--gray-600); margin-bottom: 16px;">
+                        Ajoute automatiquement 2-5 visites à chaque patient
+                    </p>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="optimiser_auto">
+                        <button type="submit" class="btn btn-warning" 
+                                onclick="return confirm('Cette action va ajouter de nombreuses visites. Continuer ?')">
+                            <i class="fas fa-magic"></i> Optimiser Tout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <div class="filters-section">
             <h3 class="filters-title">
-                <i class="fas fa-filter"></i>
-                Filtres et recherche
+                <i class="fas fa-search"></i>
+                Recherche Avancée
             </h3>
             <form method="GET" class="filters-form">
                 <div class="filters-grid">
                     <div class="filter-group">
-                        <label class="filter-label">Recherche (Nom, Prénom, N°URAP)</label>
+                        <label class="filter-label">Recherche Générale</label>
                         <input type="text" name="search" class="filter-input" 
                                value="<?= htmlspecialchars($search) ?>" 
-                               placeholder="Rechercher un patient...">
+                               placeholder="Nom, prénom, N°URAP, téléphone...">
                     </div>
                     <div class="filter-group">
                         <label class="filter-label">Sexe</label>
@@ -574,6 +803,42 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
                             <option value="">Tous</option>
                             <option value="Masculin" <?= $sexe_filter === 'Masculin' ? 'selected' : '' ?>>Masculin</option>
                             <option value="Féminin" <?= $sexe_filter === 'Féminin' ? 'selected' : '' ?>>Féminin</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Âge Min</label>
+                        <input type="number" name="age_min" class="filter-input" 
+                               value="<?= htmlspecialchars($age_min) ?>" 
+                               placeholder="Ex: 18" min="0" max="120">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Âge Max</label>
+                        <input type="number" name="age_max" class="filter-input" 
+                               value="<?= htmlspecialchars($age_max) ?>" 
+                               placeholder="Ex: 65" min="0" max="120">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Situation Matrimoniale</label>
+                        <select name="situation" class="filter-input">
+                            <option value="">Toutes</option>
+                            <?php foreach ($situations as $situation): ?>
+                            <option value="<?= htmlspecialchars($situation) ?>" 
+                                    <?= $situation_filter === $situation ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($situation) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Lieu de Résidence</label>
+                        <select name="lieu" class="filter-input">
+                            <option value="">Tous</option>
+                            <?php foreach ($lieux as $lieu): ?>
+                            <option value="<?= htmlspecialchars($lieu) ?>" 
+                                    <?= $lieu_filter === $lieu ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($lieu) ?>
+                            </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
@@ -665,11 +930,11 @@ $total_visites = array_sum(array_column($patients, 'nb_visites'));
         <?php endif; ?>
 
         <div class="actions-bar">
-            <a href="accueil.php" class="btn btn-secondary">
+            <a href="acceuil.php" class="btn btn-secondary">
                 <i class="fas fa-home"></i> Accueil
             </a>
-            <a href="patient.php" class="btn btn-primary">
-                <i class="fas fa-user-plus"></i> Nouveau patient
+            <a href="nouveau_dossier.php" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Nouveau Dossier
             </a>
         </div>
     </div>
