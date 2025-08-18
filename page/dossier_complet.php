@@ -821,6 +821,9 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             <a href="visite.php?idU=<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nouvelle visite
             </a>
+            <a href="Resultats.php"<?= htmlspecialchars($patient['Numero_urap']) ?>" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Fiche resultat
+            </a>
         </div>
     </div>
 
