@@ -737,52 +737,6 @@ $lieux = $pdo->query("SELECT DISTINCT Lieu_résidence FROM patient WHERE Lieu_r�
             </div>
         </div>
 
-        <!-- Section Amélioration des Visites -->
-        <div class="amelioration-section">
-            <h3 class="amelioration-title">
-                <i class="fas fa-chart-line"></i>
-                Amélioration des Visites
-            </h3>
-            <div class="amelioration-grid">
-                <div class="amelioration-card">
-                    <h4 style="color: var(--success); margin-bottom: 12px;">
-                        <i class="fas fa-plus-circle"></i> Ajouter des Visites
-                    </h4>
-                    <form method="POST" style="display: flex; flex-direction: column; gap: 12px;">
-                        <input type="hidden" name="action" value="ameliorer_visites">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <select name="type_visite" class="filter-input" required>
-                                <option value="consultation">Consultation</option>
-                                <option value="controle">Contrôle</option>
-                                <option value="depistage">Dépistage</option>
-                                <option value="urgence">Urgence</option>
-                            </select>
-                            <input type="number" name="nombre_visites" class="filter-input" 
-                                   min="1" max="50" value="10" placeholder="Nombre" required>
-                        </div>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Ajouter Visites
-                        </button>
-                    </form>
-                </div>
-
-                <div class="amelioration-card">
-                    <h4 style="color: var(--warning); margin-bottom: 12px;">
-                        <i class="fas fa-magic"></i> Optimisation Auto
-                    </h4>
-                    <p style="font-size: 0.9rem; color: var(--gray-600); margin-bottom: 16px;">
-                        Ajoute automatiquement 2-5 visites à chaque patient
-                    </p>
-                    <form method="POST">
-                        <input type="hidden" name="action" value="optimiser_auto">
-                        <button type="submit" class="btn btn-warning" 
-                                onclick="return confirm('Cette action va ajouter de nombreuses visites. Continuer ?')">
-                            <i class="fas fa-magic"></i> Optimiser Tout
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
 
         <div class="filters-section">
             <h3 class="filters-title">

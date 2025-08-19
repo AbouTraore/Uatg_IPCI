@@ -769,7 +769,7 @@ $total_visites = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                         <i class="fas fa-flask"></i>
                         Échantillons Prélevés
                     </div>
-                    <a href="modifier_echantillons.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>&type=<?= $echantillon_type ?><?= $echantillons ? '&id=' . $echantillon_id : '' ?>" class="btn-modify">
+                    <a href="modifier_echantillon.php?urap=<?= htmlspecialchars($patient['Numero_urap']) ?>&type=<?= $echantillon_type ?><?= $echantillons ? '&id=' . $echantillon_id : '' ?>" class="btn-modify">
                         <i class="fas fa-edit"></i> <?= $echantillons ? 'Modifier' : 'Ajouter' ?>
                     </a>
                     <div class="expand-icon" id="icon-echantillons">
